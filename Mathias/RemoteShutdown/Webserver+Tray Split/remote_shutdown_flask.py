@@ -17,7 +17,7 @@ def customprint(text):
 
 # ===== Base directory =====
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-JELLYSEER_DIR = r"D:\Scripts\Jellyseerr"
+JELLYSEER_DIR = r"D:\Scripts\Mathias\Jellyseerr"
 
 def abs_path(relative_path):
     return os.path.join(BASE_DIR, relative_path)
@@ -40,7 +40,8 @@ PORT_MAPPING = {
     "radarr": 7878,
     "sabnzbd": 6969,
     "jellyfin": 8096,
-    "jellyseerr": 5055
+    "jellyseerr": 5055,
+    "plex": 32400
 }
 
 def redirect_to_service(service_name):
@@ -75,6 +76,10 @@ def sabnzbd():
 def jellyfin():   
     return redirect_to_service("jellyfin")
     
+@app.route("/plex")   
+def plex():   
+    return redirect_to_service("plex")
+    
 @app.route("/jellyseerr") 
 def jellyseerr(): 
     return redirect_to_service("jellyseerr")
@@ -83,7 +88,7 @@ def jellyseerr():
 def jellyseerr_start():
     customprint("Starting Jellyseerr")
     os.system(f'start "" wscript "{os.path.join(JELLYSEER_DIR, "start_jellyseerr.vbs")}"')
-    return "Starting Jellyseerr..."
+    return "Starting Jellyseerr... (Takes a while, please be patient!)"
 
 @app.route("/jellyseerr-stop")
 def jellyseerr_stop():

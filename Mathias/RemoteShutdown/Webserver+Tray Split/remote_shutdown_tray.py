@@ -38,6 +38,7 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
             ("Radarr", "static/img/radarr.png", lambda e: webbrowser.open("http://localhost:7878")),
             ("Jellyfin", "static/img/jellyfin.png", lambda e: webbrowser.open("http://localhost:8096")),
             ("Jellyseerr", "static/img/jellyseerr.png", lambda e: webbrowser.open("http://localhost:5055")),
+            ("Plex", "static/img/plex.png", lambda e: webbrowser.open("http://localhost:32400")),
             ("Start Jellyseerr", "static/img/jellyseerr.png", lambda e: os.system(f'start "" wscript "{os.path.join(JELLYSEER_DIR, "start_jellyseerr.vbs")}"')),
             ("Stop Jellyseerr", "static/img/jellyseerr.png", lambda e: os.system(f'start "" wscript "{os.path.join(JELLYSEER_DIR, "stop_jellyseerr.vbs")}"')),
             ("Shutdown PC", "static/img/shutdown.png", self.confirm_shutdown),

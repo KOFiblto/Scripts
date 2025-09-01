@@ -10,15 +10,29 @@
 			text-align: center;
 			background-color: #f4f4f4;
 			margin: 0;
-			padding: 1rem;
+			padding: 0.1rem;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
 			min-height: 100vh;
 		}
 		h1 {
-			margin-bottom: 1rem;
-			font-size: 2.5rem;
+			margin-bottom: 0.5rem;
+			font-size: 2rem;
+		}
+		.toggle-btn {
+			margin-bottom: 0.55rem;
+			padding: 0.5rem 1.5rem;
+			font-size: 1rem;
+			border: none;
+			border-radius: 0.5rem;
+			cursor: pointer;
+			background-color: #6c757d;
+			color: white;
+			transition: background 0.2s;
+		}
+		.toggle-btn.on {
+			background-color: #28a745;
 		}
 		.btn, .btn-row { box-sizing: border-box; }
 		.btn {
@@ -26,9 +40,9 @@
 			align-items: center;
 			justify-content: center;
 			width: min(90%, 600px);
-			margin: 0.5rem 0;
+			margin: 0.3rem 0;
 			padding: 1rem;
-			font-size: 2rem;
+			font-size: 1.5rem;
 			min-height: 5vh;
 			max-height: 6vh;
 			text-decoration: none;
@@ -38,11 +52,14 @@
 			transition: background 0.2s;
 			cursor: pointer;
 		}
-		.btn img {
-			max-height: 3rem;
+		.btn img, .btn-half img {
+			max-height: 2.7rem;
 			width: auto;
-			margin-right: 1rem;
+			margin-right: 0.8rem;
+			transform: scale(0.9);  /* shrink slightly for phones */
+			transition: transform 0.2s;
 		}
+
 		.btn:hover { background: #0056b3; }
 		.btn-danger { background: #dc3545; }
 		.btn-danger:hover { background: #a71d2a; }
@@ -54,94 +71,158 @@
 			display: flex;
 			justify-content: space-between;
 			width: min(90%, 600px);
-			margin: 0.5rem 0;
-			gap: 50px;
+			margin: 0.3rem 0;
+			gap: 30px;
 		}
 		.btn-half { flex: 1; }
-		.btn-half img { max-height: 2.5rem; }
+		.desc {
+			color: lightgray;
+			font-size: 0.9em;
+			font-weight: normal;
+		}
 		#status-box {
-			margin-top: 1rem;
-			padding: 1rem 2rem;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin: 0.4rem 0;
+			padding: 1rem;
 			border-radius: 1rem;
-			font-size: 2.5rem;
+			font-size: 1.5rem;
 			font-weight: bold;
 			color: white;
 			min-width: 250px;
+			width: min(60%, 400px);
+			min-height: 2vh;
+			max-height: 3vh;
 		}
-		@media (max-width: 1000px) {
-			.btn {
-				font-size: 3rem;
-				min-height: 6vh;
-				max-height: 13vh;
-				padding: 1rem;
-				flex-direction: row;
-				width: calc(100% - 20px);
-				margin: 1rem 10px;
+		
+		<!-------------- B I G    S C R E E N -------------
+		Poco  :  406px width
+		Laptop: 1707px width
+		Screen: 2439px width
+		--->
+		
+		/* Handy */
+		@media (min-width: 400px) {
+			.btn img, .btn-half img {
+				transform: scale(0.9);
 			}
-			.btn img {
-				max-height: 4rem;
-				margin-right: 1rem;
-			}
-			h1 { font-size: 2.5rem; }
-			#status-box { font-size: 3rem; }
 		}
+		
+		/* Laptop */
+		@media (min-width: 1200px) {
+			.btn img, .btn-half img {
+				transform: scale(0.8);
+			}
+		}
+		
+		/* Arbeitszimmer Screen 4K */
+		@media (min-width: 2000px) {
+			.btn img, .btn-half img {
+				transform: scale(1.25);
+			}
+		}
+
+
+
 	</style>
 </head>
 <body>
-	<h1>Mathias Laptop</h1>
-	<a class="btn" href="/sonarr"><img src="{{ url_for('static', filename='img/sonarr.png') }}" alt="Sonarr"> Sonarr</a>
-	<a class="btn" href="/radarr"><img src="{{ url_for('static', filename='img/radarr.png') }}" alt="Radarr"> Radarr</a>
-	<a class="btn" href="/sabnzbd"><img src="{{ url_for('static', filename='img/sabnzbd.png') }}" alt="SABnzbd"> SABnzbd</a>
-	<a class="btn" href="/jellyfin"><img src="{{ url_for('static', filename='img/jellyfin.png') }}" alt="Jellyfin"> Jellyfin</a>
-	<a class="btn" href="/jellyseerr"><img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Jellyseerr"> Jellyseerr</a>
+	<h1>Mathias' Mediaserver</h1>
+
+	<!-- Toggle Button -->
+	<button id="toggleDescriptions" class="toggle-btn">Pro</button>
+	
+	<div id="action-status" style="font-size: 1rem; color: #333; min-height: 1rem;"></div>
+
+	<a class="btn" href="/sonarr"><img src="{{ url_for('static', filename='img/sonarr.png') }}" alt="Sonarr"> <span class="btn-text" data-desc="Serien">Sonarr</span></a>
+	<a class="btn" href="/radarr"><img src="{{ url_for('static', filename='img/radarr.png') }}" alt="Radarr"> <span class="btn-text" data-desc="Filme">Radarr</span></a>
+	<a class="btn" href="/sabnzbd"><img src="{{ url_for('static', filename='img/sabnzbd.png') }}" alt="SABnzbd"> <span class="btn-text" data-desc="Downloads">SABnzbd</span></a>
+	<a class="btn" href="/jellyfin"><img src="{{ url_for('static', filename='img/jellyfin.png') }}" alt="Jellyfin"> <span class="btn-text" data-desc="Media Server 1">Jellyfin</span></a>
+	<a class="btn" href="/plex"><img src="{{ url_for('static', filename='img/plex.png') }}" alt="Plex"> <span class="btn-text" data-desc="Media Server 2">Plex</span></a>
+	<a class="btn" href="/jellyseerr"><img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Jellyseerr"> <span class="btn-text" data-desc="Filme finden">Jellyseerr</span></a>
+
 	<div class="btn-row">
-		<a class="btn btn-half btn-green" href="/jellyseerr-start"><img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Start Jellyseerr"> Start</a>
-		<a class="btn btn-half btn-red" href="/jellyseerr-stop"><img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Stop Jellyseerr"> Stop</a>
+		<a class="btn btn-half btn-green" href="javascript:void(0);" onclick="triggerAction('/jellyseerr-start')">
+			<img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Start Jellyseerr"> 
+			<span class="btn-text">Start</span>
+		</a>
+		<a class="btn btn-half btn-red" href="javascript:void(0);" onclick="triggerAction('/jellyseerr-stop')">
+			<img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Stop Jellyseerr"> 
+			<span class="btn-text">Stop</span>
+		</a>
 	</div>
-	<a class="btn btn-danger" href="javascript:void(0);" onclick="shutdown()"><img src="{{ url_for('static', filename='img/shutdown.png') }}" alt="Shutdown"> Shutdown</a>
-	<div id="status-box">Loading... <span id="flash-dot">•</span></div>
+
+	<a class="btn btn-danger" href="javascript:void(0);" onclick="triggerAction('/shutdown')">
+		<img src="{{ url_for('static', filename='img/shutdown.png') }}" alt="Shutdown"> 
+		<span class="btn-text">Shutdown</span>
+	</a>
+
+
 	<script>
-		const statusBox = document.getElementById("status-box");
-		const flashDot = document.getElementById("flash-dot");
-		let statusInterval = null;
-		function flash() {
-			flashDot.style.opacity = "1";
-			setTimeout(() => { flashDot.style.opacity = "0"; }, 200);
-		}
-		function checkStatus() {
-			fetch('/status', {cache: "no-store"})
-				.then(response => response.text())
-				.then(data => {
-					statusBox.innerText = "Online";
-					statusBox.appendChild(flashDot);
-					statusBox.style.backgroundColor = "green";
-					flash();
-				})
-				.catch(error => {
-					statusBox.innerText = "Not Responding";
-					statusBox.appendChild(flashDot);
-					statusBox.style.backgroundColor = "red";
-					flash();
-				});
-		}
 		function shutdown() {
-		
-			if (!confirm("Are you sure you want to shut down this PC?")) {
-				return; // cancel if user clicks "Cancel"
+			const password = prompt("Enter password to shut down this PC:");
+			
+			// Replace 'YOUR_PASSWORD_HERE' with your actual password
+			if (password !== "12345") {
+				alert("Incorrect password! Shutdown aborted.");
+				return;
 			}
+
+			// Password is correct, proceed
 			clearInterval(statusInterval);
 			statusBox.innerText = "Shutting down...";
 			statusBox.appendChild(flashDot);
 			statusBox.style.backgroundColor = "orange";
 			setTimeout(() => { statusInterval = setInterval(checkStatus, 1000); }, 3000);
+
 			fetch('/shutdown')
 				.then(response => response.text())
 				.then(data => console.log(data))
 				.catch(error => console.log(error));
 		}
-		statusInterval = setInterval(checkStatus, 1000);
-		flashDot.style.transition = "opacity 0.1s";
-		flashDot.style.opacity = "0";
+
+
+
+		// Toggle Descriptions
+		const toggleBtn = document.getElementById("toggleDescriptions");
+		const btnTexts = document.querySelectorAll(".btn-text");
+		let showDescriptions = false;
+
+		// Save original base text once
+		btnTexts.forEach(el => {
+			el.dataset.baseText = el.textContent;
+		});
+
+		toggleBtn.addEventListener("click", () => {
+			showDescriptions = !showDescriptions;
+			btnTexts.forEach(el => {
+				if (el.dataset.desc) { // only if description exists
+					if (showDescriptions) {
+						el.innerHTML = `${el.dataset.baseText} <span class="desc">(${el.dataset.desc})</span>`;
+					} else {
+						el.textContent = el.dataset.baseText;
+					}
+				}
+			});
+			toggleBtn.textContent = `${showDescriptions ? "Noob" : "Pro"}`;
+			toggleBtn.classList.toggle("on", showDescriptions);
+		});
+		
+		const statusBox = document.getElementById("action-status");
+
+		function triggerAction(url) {
+			statusBox.textContent = "Processing...";
+			fetch(url)
+				.then(response => response.text())
+				.then(data => {
+					statusBox.textContent = data;
+				})
+				.catch(err => {
+					statusBox.textContent = "Error: " + err;
+				});
+		}
+		
 	</script>
 </body>
 </html>
