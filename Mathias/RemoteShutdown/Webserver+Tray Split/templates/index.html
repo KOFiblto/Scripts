@@ -262,11 +262,11 @@
 	</a>
 	
 	<div class="btn-row">
-		<a class="btn btn-half btn-green" href="javascript:void(0);" onclick="triggerAction('/jellyseerr-start')">
+		<a class="btn btn-half btn-green" href="javascript:void(0);" onclick="jellyseerr_start()">
 			<img src="/img/jellyseerr.webp" alt="Start Jellyseerr">
 			<span class="btn-text">Start</span>
 		</a>
-		<a class="btn btn-half btn-red" href="javascript:void(0);" onclick="triggerAction('/jellyseerr-stop')">
+		<a class="btn btn-half btn-red" href="javascript:void(0);" onclick="jellyseerr_stop()">
 			<img src="/img/jellyseerr.webp" alt="Stop Jellyseerr">
 			<span class="btn-text">Stop</span>
 		</a>
@@ -277,7 +277,6 @@
 		<span class="btn-text">Shutdown</span>
 	</a>
 	
-
 
 
 
@@ -296,7 +295,7 @@
  
 		/////////////////////////////////////////
 		////// Noob/Pro Mode
-		//Save Default name (Sonarr/Radarr)
+		//Save Default name (Sonarr/Radarr)	
 		btnLabels.forEach(el => {
 			el.dataset.baseText = el.textContent;
 		});
@@ -335,18 +334,66 @@
 		////// Shutdown Prompt
 		function shutdown() {
 			const password = prompt("Enter password to shut down this PC:");
-	
-			if (password !== "12345") {
-				alert("Incorrect password! Shutdown aborted.");
-				return;
-			}
+			if (!password) return;
+		
+			textBox.textContent = "Processing shutdown...";
+		
+			fetch('/shutdown', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ password })
+			})
+			.then(response => response.text())
+			.then(data => {
+				textBox.textContent = data;
+			})
+			.catch(err => {
+				textBox.textContent = "Error: " + err;
+			});
+		}
 
-			textBox.textContent = "Shutting down...";
+		/////////////////////////////////////////
+		////// Start Jellyseerr
+		function jellyseerr_start() {
+			const password = prompt("Enter password to start Jellyseerr:");
+			if (!password) return;
+		
+			textBox.textContent = "Processing start of Jellyseerr...";
+		
+			fetch('/jellyseerr-start', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ password })
+			})
+			.then(response => response.text())
+			.then(data => {
+				textBox.textContent = data;
+			})
+			.catch(err => {
+				textBox.textContent = "Error: " + err;
+			});
+		}
 
-			fetch('/shutdown')
-				.then(response => response.text())
-				.then(data => console.log(data))
-				.catch(error => console.log(error));
+		/////////////////////////////////////////
+		////// Stop Jellyseerr
+		function jellyseerr_stop() {
+			const password = prompt("Enter password to stop Jellyseerr:");
+			if (!password) return;
+		
+			textBox.textContent = "Processing stop of Jellyseerr...";
+		
+			fetch('/jellyseerr-stop', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ password })
+			})
+			.then(response => response.text())
+			.then(data => {
+				textBox.textContent = data;
+			})
+			.catch(err => {
+				textBox.textContent = "Error: " + err;
+			});
 		}
 
 
