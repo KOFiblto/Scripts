@@ -41,7 +41,8 @@ PORT_MAPPING = {
     "sabnzbd": 6969,
     "jellyfin": 8096,
     "jellyseerr": 5055,
-    "plex": 32400
+    "plex": 32400,
+    "bazarr": 6767 
 }
 
 def redirect_to_service(service_name):
@@ -67,6 +68,10 @@ def sonarr():
 @app.route("/radarr")      
 def radarr():     
     return redirect_to_service("radarr")
+
+@app.route("/bazarr")      
+def bazarr():     
+    return redirect_to_service("bazarr")
     
 @app.route("/sabnzbd")    
 def sabnzbd():    

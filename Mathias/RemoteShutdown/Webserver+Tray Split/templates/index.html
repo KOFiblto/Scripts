@@ -95,12 +95,80 @@
 			min-height: 2vh;
 			max-height: 3vh;
 		}
+
+		.switch-container {
+			display: inline-flex;
+			align-items: center;
+			background: #e0e0e0;
+			border-radius: 20px;
+			padding: 7px;
+			cursor: pointer;
+			user-select: none;
+			width: 90px;
+			position: relative;
+		  }
+		  
+		  .switch-option {
+			flex: 1;
+			text-align: center;
+			font-size: 0.9rem;
+			color: #555;
+			z-index: 1;
+			transition: color 0.3s;
+		  }
+		  .switch-option.left {
+			text-align: left;
+			padding-left: 5px;
+			padding-right: 5px;
+		}
 		
-		<!-------------- B I G    S C R E E N -------------
+		.switch-option.right {
+			text-align: right;
+			padding-right: 5px;
+			padding-left: 5px;
+		}
+		  
+		.switch-handle {
+			position: absolute;
+			top: 2px;
+			left: 2px;
+			width: 48px;
+			height: 26px;
+			background: white;
+			border-radius: 20px;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+			transition: left 0.2s ease-in-out, 
+						width 0.2s ease-in-out,
+						background 0.2s ease-in-out;
+		}
+		
+		  
+		.switch-container:not(.on) .switch-handle {
+			left: 3px;
+			width: 52px;
+			background: #8dd9a8;
+		}
+		
+		.switch-container.on .switch-handle {
+			left: 61px;
+			width: 40px;
+			background: #66bfff; 
+		}
+			
+		
+		.switch-container.on .switch-option.right {
+			color: black;
+		}
+		
+		.switch-container:not(.on) .switch-option.left {
+			color: black;
+		}
+		
+		/*-------------- B I G    S C R E E N -------------
 		Poco  :  406px width
 		Laptop: 1707px width
 		Screen: 2439px width
-		--->
+		*/
 		
 		/* Handy */
 		@media (min-width: 400px) {
@@ -131,12 +199,17 @@
 	<h1>Mathias' Mediaserver</h1>
 
 	<!-- Toggle Button -->
-	<button id="toggleDescriptions" class="toggle-btn">Pro</button>
+	<div id="toggleSwitch" class="switch-container">
+		<div class="switch-option left">Noob</div>
+		<div class="switch-option right">Pro</div>
+		<div class="switch-handle"></div>
+	  </div>
 	
 	<div id="action-status" style="font-size: 1rem; color: #333; min-height: 1rem;"></div>
 
 	<a class="btn" href="/sonarr"><img src="{{ url_for('static', filename='img/sonarr.png') }}" alt="Sonarr"> <span class="btn-text" data-desc="Serien">Sonarr</span></a>
 	<a class="btn" href="/radarr"><img src="{{ url_for('static', filename='img/radarr.png') }}" alt="Radarr"> <span class="btn-text" data-desc="Filme">Radarr</span></a>
+	<a class="btn" href="/bazarr"><img src="{{ url_for('static', filename='img/bazarr.png') }}" alt="Bazarr"> <span class="btn-text" data-desc="Untertitel">Bazarr</span></a>
 	<a class="btn" href="/sabnzbd"><img src="{{ url_for('static', filename='img/sabnzbd.png') }}" alt="SABnzbd"> <span class="btn-text" data-desc="Downloads">SABnzbd</span></a>
 	<a class="btn" href="/jellyfin"><img src="{{ url_for('static', filename='img/jellyfin.png') }}" alt="Jellyfin"> <span class="btn-text" data-desc="Media Server 1">Jellyfin</span></a>
 	<a class="btn" href="/plex"><img src="{{ url_for('static', filename='img/plex.png') }}" alt="Plex"> <span class="btn-text" data-desc="Media Server 2">Plex</span></a>
@@ -153,74 +226,71 @@
 		</a>
 	</div>
 
-	<a class="btn btn-danger" href="javascript:void(0);" onclick="triggerAction('/shutdown')">
+	<a class="btn btn-danger" href="javascript:void(0);" onclick="shutdown()">
 		<img src="{{ url_for('static', filename='img/shutdown.png') }}" alt="Shutdown"> 
 		<span class="btn-text">Shutdown</span>
 	</a>
 
 
 	<script>
+		// Toggle Descriptions
+		const toggleBtn = document.getElementById("toggleDescriptions");
+		const btnTexts = document.querySelectorAll(".btn-text");
+		const textBox = document.getElementById("action-status");
+		const toggleSwitch = document.getElementById("toggleSwitch");
+		let showDescriptions = true;
+		toggleSwitch.classList.add("on"); // sets toggle to Pro on page load
+
+		btnTexts.forEach(el => {
+			el.dataset.baseText = el.textContent;
+		});
+
+
+		toggleSwitch.addEventListener("click", () => {
+		showDescriptions = !showDescriptions;
+		toggleSwitch.classList.toggle("on", showDescriptions);
+
+		// Example: Update button texts
+		const btnTexts = document.querySelectorAll(".btn-text");
+		btnTexts.forEach(el => {
+			if (el.dataset.desc) {
+			if (!showDescriptions) {
+				el.innerHTML = `${el.dataset.baseText} <span class="desc">(${el.dataset.desc})</span>`;
+			} else {
+				el.textContent = el.dataset.baseText;
+			}
+			}
+		});
+		});
+
+		/////////////////////////////////////////
+		function triggerAction(url) {
+			textBox.textContent = "Processing...";
+			fetch(url)
+				.then(response => response.text())
+				.then(data => {
+					textBox.textContent = data;
+				})
+				.catch(err => {
+					textBox.textContent = "Error: " + err;
+				});
+		}
+
+		/////////////////////////////////////////
 		function shutdown() {
 			const password = prompt("Enter password to shut down this PC:");
-			
-			// Replace 'YOUR_PASSWORD_HERE' with your actual password
+	
 			if (password !== "12345") {
 				alert("Incorrect password! Shutdown aborted.");
 				return;
 			}
 
-			// Password is correct, proceed
-			clearInterval(statusInterval);
-			statusBox.innerText = "Shutting down...";
-			statusBox.appendChild(flashDot);
-			statusBox.style.backgroundColor = "orange";
-			setTimeout(() => { statusInterval = setInterval(checkStatus, 1000); }, 3000);
+			textBox.textContent = "Shutting down...";
 
 			fetch('/shutdown')
 				.then(response => response.text())
 				.then(data => console.log(data))
 				.catch(error => console.log(error));
-		}
-
-
-
-		// Toggle Descriptions
-		const toggleBtn = document.getElementById("toggleDescriptions");
-		const btnTexts = document.querySelectorAll(".btn-text");
-		let showDescriptions = false;
-
-		// Save original base text once
-		btnTexts.forEach(el => {
-			el.dataset.baseText = el.textContent;
-		});
-
-		toggleBtn.addEventListener("click", () => {
-			showDescriptions = !showDescriptions;
-			btnTexts.forEach(el => {
-				if (el.dataset.desc) { // only if description exists
-					if (showDescriptions) {
-						el.innerHTML = `${el.dataset.baseText} <span class="desc">(${el.dataset.desc})</span>`;
-					} else {
-						el.textContent = el.dataset.baseText;
-					}
-				}
-			});
-			toggleBtn.textContent = `${showDescriptions ? "Noob" : "Pro"}`;
-			toggleBtn.classList.toggle("on", showDescriptions);
-		});
-		
-		const statusBox = document.getElementById("action-status");
-
-		function triggerAction(url) {
-			statusBox.textContent = "Processing...";
-			fetch(url)
-				.then(response => response.text())
-				.then(data => {
-					statusBox.textContent = data;
-				})
-				.catch(err => {
-					statusBox.textContent = "Error: " + err;
-				});
 		}
 		
 	</script>
