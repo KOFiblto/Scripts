@@ -36,11 +36,12 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         items = [
             ("Sonarr", "static/img/sonarr.png", lambda e: webbrowser.open("http://localhost:8989")),
             ("Radarr", "static/img/radarr.png", lambda e: webbrowser.open("http://localhost:7878")),
+            ("Bazarr", "static/img/bazarr.png", lambda e: webbrowser.open("http://localhost:6767")),
             ("Jellyfin", "static/img/jellyfin.png", lambda e: webbrowser.open("http://localhost:8096")),
-            ("Jellyseerr", "static/img/jellyseerr.png", lambda e: webbrowser.open("http://localhost:5055")),
             ("Plex", "static/img/plex.png", lambda e: webbrowser.open("http://localhost:32400")),
-            ("Start Jellyseerr", "static/img/jellyseerr.png", lambda e: os.system(f'start "" wscript "{os.path.join(JELLYSEER_DIR, "start_jellyseerr.vbs")}"')),
-            ("Stop Jellyseerr", "static/img/jellyseerr.png", lambda e: os.system(f'start "" wscript "{os.path.join(JELLYSEER_DIR, "stop_jellyseerr.vbs")}"')),
+            ("Jellyseerr", "static/img/jellyseerr.png", lambda e: webbrowser.open("http://localhost:5055")),
+            ("🟢Start Jellyseerr", "static/img/jellyseerr.png", lambda e: os.system(f'start "" wscript "{os.path.join(JELLYSEER_DIR, "start_jellyseerr.vbs")}"')),
+            ("❌Stop Jellyseerr", "static/img/jellyseerr.png", lambda e: os.system(f'start "" wscript "{os.path.join(JELLYSEER_DIR, "stop_jellyseerr.vbs")}"')),
             ("Shutdown PC", "static/img/shutdown.png", self.confirm_shutdown),
             ("Quit", "static/img/quit.png", lambda e: wx.CallAfter(wx.GetApp().ExitMainLoop))
         ]
