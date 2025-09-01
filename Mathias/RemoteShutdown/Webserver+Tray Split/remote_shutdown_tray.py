@@ -37,6 +37,7 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
             ("Sonarr", "static/img/sonarr.png", lambda e: webbrowser.open("http://localhost:8989")),
             ("Radarr", "static/img/radarr.png", lambda e: webbrowser.open("http://localhost:7878")),
             ("Bazarr", "static/img/bazarr.png", lambda e: webbrowser.open("http://localhost:6767")),
+            ("Tdarr", "static/img/tdarr.png", lambda e: webbrowser.open("http://localhost:8265")),
             ("Jellyfin", "static/img/jellyfin.png", lambda e: webbrowser.open("http://localhost:8096")),
             ("Plex", "static/img/plex.png", lambda e: webbrowser.open("http://localhost:32400")),
             ("Jellyseerr", "static/img/jellyseerr.png", lambda e: webbrowser.open("http://localhost:5055")),

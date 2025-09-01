@@ -20,20 +20,7 @@
 			margin-bottom: 0.5rem;
 			font-size: 2rem;
 		}
-		.toggle-btn {
-			margin-bottom: 0.55rem;
-			padding: 0.5rem 1.5rem;
-			font-size: 1rem;
-			border: none;
-			border-radius: 0.5rem;
-			cursor: pointer;
-			background-color: #6c757d;
-			color: white;
-			transition: background 0.2s;
-		}
-		.toggle-btn.on {
-			background-color: #28a745;
-		}
+		/*------------ Buttons -----------*/
 		.btn, .btn-row { box-sizing: border-box; }
 		.btn {
 			display: flex;
@@ -56,7 +43,7 @@
 			max-height: 2.7rem;
 			width: auto;
 			margin-right: 0.8rem;
-			transform: scale(0.9);  /* shrink slightly for phones */
+			transform: scale(0.9);
 			transition: transform 0.2s;
 		}
 
@@ -80,22 +67,9 @@
 			font-size: 0.9em;
 			font-weight: normal;
 		}
-		#status-box {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			margin: 0.4rem 0;
-			padding: 1rem;
-			border-radius: 1rem;
-			font-size: 1.5rem;
-			font-weight: bold;
-			color: white;
-			min-width: 250px;
-			width: min(60%, 400px);
-			min-height: 2vh;
-			max-height: 3vh;
-		}
 
+
+		/*------------ Mode Switch -----------*/
 		.switch-container {
 			display: inline-flex;
 			align-items: center;
@@ -106,17 +80,17 @@
 			user-select: none;
 			width: 90px;
 			position: relative;
-		  }
+		}
 		  
-		  .switch-option {
+		.switch-option {
 			flex: 1;
 			text-align: center;
 			font-size: 0.9rem;
 			color: #555;
 			z-index: 1;
 			transition: color 0.3s;
-		  }
-		  .switch-option.left {
+		}
+		.switch-option.left {
 			text-align: left;
 			padding-left: 5px;
 			padding-right: 5px;
@@ -141,8 +115,7 @@
 						width 0.2s ease-in-out,
 						background 0.2s ease-in-out;
 		}
-		
-		  
+				  
 		.switch-container:not(.on) .switch-handle {
 			left: 3px;
 			width: 52px;
@@ -154,8 +127,7 @@
 			width: 40px;
 			background: #66bfff; 
 		}
-			
-		
+					
 		.switch-container.on .switch-option.right {
 			color: black;
 		}
@@ -163,8 +135,21 @@
 		.switch-container:not(.on) .switch-option.left {
 			color: black;
 		}
+
+		/*------------ Status Dot -----------*/
+		.status-dot {
+			display: inline-block;
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background-color: red; /* default */
+			margin-left: 8px;
+		}
+		.status-dot.online { background-color: #28a745; } /* green */
 		
-		/*-------------- B I G    S C R E E N -------------
+		/*-------------------------------------------------
+		  -------------- B I G    S C R E E N -------------
+		  -------------------------------------------------
 		Poco  :  406px width
 		Laptop: 1707px width
 		Screen: 2439px width
@@ -195,6 +180,9 @@
 
 	</style>
 </head>
+<!----------------------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------------------->
 <body>
 	<h1>Mathias' Mediaserver</h1>
 
@@ -207,13 +195,70 @@
 	
 	<div id="action-status" style="font-size: 1rem; color: #333; min-height: 1rem;"></div>
 
-	<a class="btn" href="/sonarr"><img src="{{ url_for('static', filename='img/sonarr.png') }}" alt="Sonarr"> <span class="btn-text" data-desc="Serien">Sonarr</span></a>
-	<a class="btn" href="/radarr"><img src="{{ url_for('static', filename='img/radarr.png') }}" alt="Radarr"> <span class="btn-text" data-desc="Filme">Radarr</span></a>
-	<a class="btn" href="/bazarr"><img src="{{ url_for('static', filename='img/bazarr.png') }}" alt="Bazarr"> <span class="btn-text" data-desc="Untertitel">Bazarr</span></a>
-	<a class="btn" href="/sabnzbd"><img src="{{ url_for('static', filename='img/sabnzbd.png') }}" alt="SABnzbd"> <span class="btn-text" data-desc="Downloads">SABnzbd</span></a>
-	<a class="btn" href="/jellyfin"><img src="{{ url_for('static', filename='img/jellyfin.png') }}" alt="Jellyfin"> <span class="btn-text" data-desc="Media Server 1">Jellyfin</span></a>
-	<a class="btn" href="/plex"><img src="{{ url_for('static', filename='img/plex.png') }}" alt="Plex"> <span class="btn-text" data-desc="Media Server 2">Plex</span></a>
-	<a class="btn" href="/jellyseerr"><img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Jellyseerr"> <span class="btn-text" data-desc="Filme finden">Jellyseerr</span></a>
+	<a class="btn" href="/sonarr">
+		<img src="{{ url_for('static', filename='img/sonarr.png') }}" alt="Sonarr"> 
+		<span class="btn-text" data-desc="Serien">
+		  	<span class="btn-label">Sonarr</span>
+		  	<span class="status-dot" id="status-sonarr"></span>
+		</span>
+	</a>
+	  
+	  <a class="btn" href="/radarr">
+		<img src="{{ url_for('static', filename='img/radarr.png') }}" alt="Radarr"> 
+		<span class="btn-text" data-desc="Filme">
+		  	<span class="btn-label">Radarr</span>
+		  	<span class="status-dot" id="status-radarr"></span>
+		</span>
+	</a>
+	  
+	<a class="btn" href="/bazarr">
+		<img src="{{ url_for('static', filename='img/bazarr.png') }}" alt="Bazarr"> 
+		<span class="btn-text" data-desc="Untertitel">
+		  	<span class="btn-label">Bazarr</span>
+		  	<span class="status-dot" id="status-bazarr"></span>
+		</span>
+	</a>
+	  
+	<a class="btn" href="/tdarr">
+		<img src="{{ url_for('static', filename='img/tdarr.png') }}" alt="Tdarr"> 
+		<span class="btn-text" data-desc="Optimizing">
+		  	<span class="btn-label">Tdarr</span>
+		  	<span class="status-dot" id="status-tdarr"></span>
+		</span>
+	</a>
+	  
+	<a class="btn" href="/sabnzbd">
+		<img src="{{ url_for('static', filename='img/sabnzbd.png') }}" alt="SABnzbd"> 
+		<span class="btn-text" data-desc="Downloads">
+		  	<span class="btn-label">SABnzbd</span>
+		  	<span class="status-dot" id="status-sabnzbd"></span>
+		</span>
+	</a>
+	  
+	<a class="btn" href="/jellyfin">
+		<img src="{{ url_for('static', filename='img/jellyfin.png') }}" alt="Jellyfin"> 
+		<span class="btn-text" data-desc="Media Server 1">
+		  	<span class="btn-label">Jellyfin</span>
+		  	<span class="status-dot" id="status-jellyfin"></span>
+		</span>
+	</a>
+	  
+	<a class="btn" href="/plex">
+		<img src="{{ url_for('static', filename='img/plex.png') }}" alt="Plex"> 
+		<span class="btn-text" data-desc="Media Server 2">
+		  	<span class="btn-label">Plex</span>
+		  	<span class="status-dot" id="status-plex"></span>
+		</span>
+	</a>
+	  
+	<a class="btn" href="/jellyseerr">
+		<img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Jellyseerr"> 
+		<span class="btn-text" data-desc="Filme finden">
+		  	<span class="btn-label">Jellyseerr</span>
+		  	<span class="status-dot" id="status-jellyseerr"></span>
+		</span>
+	</a>
+	  
 
 	<div class="btn-row">
 		<a class="btn btn-half btn-green" href="javascript:void(0);" onclick="triggerAction('/jellyseerr-start')">
@@ -232,38 +277,45 @@
 	</a>
 
 
+
+
+<!----------------------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------------------->
+
 	<script>
-		// Toggle Descriptions
 		const toggleBtn = document.getElementById("toggleDescriptions");
-		const btnTexts = document.querySelectorAll(".btn-text");
+		const btnLabels = document.querySelectorAll(".btn-label");
 		const textBox = document.getElementById("action-status");
 		const toggleSwitch = document.getElementById("toggleSwitch");
 		let showDescriptions = true;
-		toggleSwitch.classList.add("on"); // sets toggle to Pro on page load
-
-		btnTexts.forEach(el => {
+		toggleSwitch.classList.add("on");
+ 
+		/////////////////////////////////////////
+		////// Noob/Pro Mode
+		//Save Default name (Sonarr/Radarr)
+		btnLabels.forEach(el => {
 			el.dataset.baseText = el.textContent;
 		});
-
-
+		// Swap Names
 		toggleSwitch.addEventListener("click", () => {
-		showDescriptions = !showDescriptions;
-		toggleSwitch.classList.toggle("on", showDescriptions);
-
-		// Example: Update button texts
-		const btnTexts = document.querySelectorAll(".btn-text");
-		btnTexts.forEach(el => {
-			if (el.dataset.desc) {
-			if (!showDescriptions) {
-				el.innerHTML = `${el.dataset.baseText} <span class="desc">(${el.dataset.desc})</span>`;
-			} else {
-				el.textContent = el.dataset.baseText;
-			}
-			}
+			showDescriptions = !showDescriptions;
+			toggleSwitch.classList.toggle("on", showDescriptions);
+		
+			btnLabels.forEach(el => {
+				const desc = el.parentElement.dataset.desc;
+				if (desc) {
+					if (!showDescriptions) {
+						el.innerHTML = `${el.dataset.baseText} <span class="desc">(${desc})</span>`;
+					} else {
+						el.textContent = el.dataset.baseText;
+					}
+				}
+			});
 		});
-		});
 
-		/////////////////////////////////////////
+		/////////////////////////////////////////+
+		///// Start / Stop Process
 		function triggerAction(url) {
 			textBox.textContent = "Processing...";
 			fetch(url)
@@ -277,6 +329,7 @@
 		}
 
 		/////////////////////////////////////////
+		////// Shutdown Prompt
 		function shutdown() {
 			const password = prompt("Enter password to shut down this PC:");
 	
@@ -292,6 +345,28 @@
 				.then(data => console.log(data))
 				.catch(error => console.log(error));
 		}
+
+
+		/////////////////////////////////////////
+		///// Status Dot next to Service
+		function updateServiceStatus() {
+			fetch('/service-status')
+				.then(response => response.json())
+				.then(data => {
+					for (const [service, running] of Object.entries(data)) {
+						const dot = document.getElementById(`status-${service}`);
+						if (dot) {
+							dot.classList.toggle("online", running);
+						}
+					}
+				});
+		}
+		
+		// Run once on load + every 10s
+		updateServiceStatus();
+		setInterval(updateServiceStatus, 500);
+		
+
 		
 	</script>
 </body>

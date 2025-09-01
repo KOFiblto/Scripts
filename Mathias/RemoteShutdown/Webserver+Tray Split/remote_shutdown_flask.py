@@ -1,7 +1,8 @@
 import logging
 import os
 import socket
-from flask import Flask, render_template_string, redirect, request, render_template
+import psutil
+from flask import Flask, render_template_string, redirect, request, render_template, send_from_directory
 
 # ===== Logging =====
 logging.basicConfig(filename="server.log", level=logging.INFO,
@@ -34,6 +35,19 @@ def get_local_ip():
         s.close()
     return ip
 
+# ===== Check if Service is listening on Port (Running/Not running) =====
+def is_port_open(port):
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(0.5)
+    try:
+        s.connect(("127.0.0.1", port))
+        s.close()
+        return True
+    except:
+        return False
+
+# ===== Name -> Port =====
 SERVER_IP = get_local_ip()
 PORT_MAPPING = {
     "sonarr": 8989,
@@ -42,9 +56,11 @@ PORT_MAPPING = {
     "jellyfin": 8096,
     "jellyseerr": 5055,
     "plex": 32400,
-    "bazarr": 6767 
+    "bazarr": 6767,
+    "tdarr": 8265
 }
 
+# ===== Redirect to localhost or <Laptop IP> =====
 def redirect_to_service(service_name):
     port = PORT_MAPPING.get(service_name, 5000)
     client_ip = request.remote_addr
@@ -54,6 +70,14 @@ def redirect_to_service(service_name):
         url = f"http://{SERVER_IP}:{port}"
     customprint(f"Redirecting {client_ip} -> {url}")
     return redirect(url)
+
+# ===== Save Images on Browser =====
+@app.after_request
+def add_header(response):
+    if "static" in request.path:
+        response.cache_control.max_age = 60 * 60 * 24 * 30  # 30 days
+    return response
+
 
 # ===== Routes =====
 @app.errorhandler(Exception)
@@ -65,9 +89,13 @@ def handle_exception(e):
 def sonarr():     
     return redirect_to_service("sonarr")
     
-@app.route("/radarr")      
+@app.route("/radarr")       
 def radarr():     
     return redirect_to_service("radarr")
+
+@app.route("/tdarr")
+def tdarr():
+    return redirect_to_service("tdarr")
 
 @app.route("/bazarr")      
 def bazarr():     
@@ -76,6 +104,7 @@ def bazarr():
 @app.route("/sabnzbd")    
 def sabnzbd():    
     return redirect_to_service("sabnzbd")
+
     
 @app.route("/jellyfin")   
 def jellyfin():   
@@ -110,6 +139,13 @@ def shutdown():
 @app.route("/status")
 def status():
     return "online"
+
+@app.route("/service-status")
+def service_status():
+    status = {}
+    for name, port in PORT_MAPPING.items():
+        status[name] = is_port_open(port)
+    return status
 
 @app.route("/")
 def index():
