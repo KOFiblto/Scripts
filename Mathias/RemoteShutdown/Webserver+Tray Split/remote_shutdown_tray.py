@@ -4,9 +4,22 @@ import webbrowser
 import os
 import ctypes
 import logging
+import socket
+
+PORT_MAPPING = {
+    "sonarr": 8989,
+    "radarr": 7878,
+    "sabnzbd": 6969,
+    "jellyfin": 8096,
+    "jellyseerr": 5055,
+    "plex": 32400,
+    "bazarr": 6767,
+    "tdarr": 8265
+}
+SERVER_IP = get_local_ip()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-JELLYSEER_DIR = r"D:\Scripts\Jellyseerr"
+JELLYSEER_DIR = r"D:\Scripts\Mathias\Jellyseerr"
 
 def abs_path(relative_path):
     return os.path.join(BASE_DIR, relative_path)

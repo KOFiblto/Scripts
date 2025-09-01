@@ -3,40 +3,27 @@ import mimetypes
 import os
 import socket
 import psutil
+import hashlib
 from threading import Thread
 import time
 from flask import Flask, render_template_string, redirect, request, render_template, send_from_directory, make_response, jsonify
 
-mimetypes.add_type('image/webp', '.webp')
 
-# ===== Logging =====
-logging.basicConfig(filename="server.log", level=logging.INFO,
-                    format="%(asctime)s %(levelname)s: %(message)s")
 
-app = Flask(__name__)
-PRINT = 0
-status_cache = {}
 
-# ===== Base directory =====
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-JELLYSEER_DIR = r"D:\Scripts\Mathias\Jellyseerr"
+# =========================================
+# =========== F U N C T I O N S ===========
+# =========================================
 
-# ===== Name -> Port =====
-PORT_MAPPING = {
-    "sonarr": 8989,
-    "radarr": 7878,
-    "sabnzbd": 6969,
-    "jellyfin": 8096,
-    "jellyseerr": 5055,
-    "plex": 32400,
-    "bazarr": 6767,
-    "tdarr": 8265
-}
-
+# ===== Rel Path to Abs Path for EXE =====
 def abs_path(relative_path):
     return os.path.join(BASE_DIR, relative_path)
 
-# --- Log
+# ===== Hash Password Check =====
+def check_password(password):
+    return hashlib.sha256(password.encode()).hexdigest() == PASSWORD_HASH
+
+# ===== Log =====
 def customprint(text):
     if PRINT:
         print(text)
@@ -54,7 +41,6 @@ def get_local_ip():
         s.close()
     return ip
 
-SERVER_IP = get_local_ip()
 
 # ===== Check if Service is listening on Port (Running/Not running) =====
 def is_port_open(port):
@@ -75,9 +61,6 @@ def update_status_cache():
         status_cache = {name: is_port_open(port) for name, port in PORT_MAPPING.items()}
         time.sleep(1)
 
-status_thread = Thread(target=update_status_cache, daemon=True)
-status_thread.start()
-
 
 # ===== Redirect to localhost or <Laptop IP> =====
 def redirect_to_service(service_name):
@@ -90,6 +73,54 @@ def redirect_to_service(service_name):
     customprint(f"Redirecting {client_ip} -> {url}")
     return redirect(url)
 
+
+
+# =========================================
+# =========== V A R I A B L E S ===========
+# =========================================
+
+# ===== Variables =====
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+JELLYSEER_DIR = r"D:\Scripts\Mathias\Jellyseerr"
+PASSWORD_HASH = "551cd4a09edfca75f017fedf4b4aefabd127d91072de3c3a1d2b6ffc511f8fa8"
+SERVER_IP = get_local_ip()
+status_cache = {}
+PRINT = 0
+PORT_MAPPING = {
+    "sonarr": 8989,
+    "radarr": 7878,
+    "sabnzbd": 6969,
+    "jellyfin": 8096,
+    "jellyseerr": 5055,
+    "plex": 32400,
+    "bazarr": 6767,
+    "tdarr": 8265
+}
+# ===== FLASK / THREADING =====
+status_thread = Thread(target=update_status_cache, daemon=True)
+status_thread.start()
+app = Flask(__name__)
+
+# ===== Allow WEBP =====
+mimetypes.add_type('image/webp', '.webp')
+
+# ===== Logging =====
+logging.basicConfig(filename="server.log", level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+
+
+
+
+# =========================================
+# ============== R O U T E S ==============
+# =========================================
+
+# ===== Error =====
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logging.exception("Flask route error:")
+    return f"Internal Server Error: {e}", 500
+
+
 # ===== Save Images on Browser =====
 @app.after_request
 def add_header(response):
@@ -98,75 +129,112 @@ def add_header(response):
     return response
 
 
-# ===== Routes =====
-@app.errorhandler(Exception)
-def handle_exception(e):
-    logging.exception("Flask route error:")
-    return f"Internal Server Error: {e}", 500
-
+# ===== Sonarr =====
 @app.route("/sonarr")     
 def sonarr():     
     return redirect_to_service("sonarr")
     
+
+# ===== Radarr =====
 @app.route("/radarr")       
 def radarr():     
     return redirect_to_service("radarr")
 
+
+# ===== Tdarr =====
 @app.route("/tdarr")
 def tdarr():
     return redirect_to_service("tdarr")
 
+
+# ===== Bazarr =====
 @app.route("/bazarr")      
 def bazarr():     
     return redirect_to_service("bazarr")
     
+
+# ===== SABnzbd =====
 @app.route("/sabnzbd")    
 def sabnzbd():    
     return redirect_to_service("sabnzbd")
 
-    
+
+# ===== Jellyfin =====
 @app.route("/jellyfin")   
 def jellyfin():   
     return redirect_to_service("jellyfin")
     
+
+# ===== Plex =====
 @app.route("/plex")   
 def plex():   
     return redirect_to_service("plex")
     
+
+# ===== Jellyseerr =====
 @app.route("/jellyseerr") 
 def jellyseerr(): 
     return redirect_to_service("jellyseerr")
 
-@app.route("/jellyseerr-start")
+
+# ===== Jellyseerr Start =====
+@app.route("/jellyseerr-start", methods=['POST'])
 def jellyseerr_start():
+    data = request.get_json()
+    if not data or 'password' not in data:
+        return "No password provided!", 400
+
+    if not check_password(data['password']):
+        return "Incorrect password! Start aborted.", 403
+
     customprint("Starting Jellyseerr")
     os.system(f'start "" wscript "{os.path.join(JELLYSEER_DIR, "start_jellyseerr.vbs")}"')
     return "Starting Jellyseerr... (Takes a while, please be patient!)"
 
-@app.route("/jellyseerr-stop")
+
+# ===== Jellyseerr Stop =====
+@app.route("/jellyseerr-stop", methods=['POST'])
 def jellyseerr_stop():
+    data = request.get_json()
+    if not data or 'password' not in data:
+        return "No password provided!", 400
+
+    if not check_password(data['password']):
+        return "Incorrect password! Stop aborted.", 403
+
     customprint("Stopping Jellyseerr")
     os.system(f'start "" wscript "{os.path.join(JELLYSEER_DIR, "stop_jellyseerr.vbs")}"')
     return "Stopping Jellyseerr..."
 
-@app.route("/shutdown")
+
+# ===== Shutdown PC =====
+@app.route('/shutdown', methods=['POST'])
 def shutdown():
-    os.system("shutdown /s /f /t 0")
-    customprint("Shutting down...")
+    data = request.get_json()
+    if not data or 'password' not in data:
+        return "No password provided!", 400
+
+    password = data['password']
+    if not check_password(password):
+        return "Incorrect password! Shutdown aborted.", 403
+   
+    # os.system("shutdown /s /f /t 0")
     return "Shutting down..."
 
-@app.route("/status")
-def status():
-    return "online"
 
+# ===== Status Dots =====
 @app.route("/service-status")
 def service_status():
     return jsonify(status_cache)
 
+
+# ===== Home =====
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
+# ===== Load WEBP images =====
 @app.route("/img/<filename>")
 def serve_img(filename):
     path = os.path.join(app.root_path, "static/img")
