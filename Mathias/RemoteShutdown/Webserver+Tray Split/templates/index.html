@@ -142,18 +142,18 @@
 		/*------------ Status Dot -----------*/
 		.status-dot {
 			position: absolute;
-			right: 20px; /* distance from right edge */
+			right: 20px;
 			width: 20px;
 			height: 20px;
 			border-radius: 50%;
-			background-color: red; /* default */
+			background-color: red;
 			top: 50%;
-			transform: translateY(-50%); /* vertically center */
+			transform: translateY(-50%);
 			border: 0.5px solid black;
 		}
 		
 		.status-dot.online {
-			background-color: #28a745; /* green */
+			background-color: #28a745;
 		}
 		
 
@@ -203,8 +203,10 @@
 		<div class="switch-handle"></div>
 	</div>
 
+	<!-- Text  -->
 	<div id="action-status" style="font-size: 1rem; color: #333; min-height: 1rem;"></div>
 
+	<!-- Sonarr -->
 	<a class="btn" href="/sonarr">
 		<img src="/img/sonarr.webp" alt="Sonarr">
 		<span class="btn-text" data-desc="Serien">
@@ -213,6 +215,7 @@
 		</span>
 	</a>
 	
+	<!-- Radarr -->
 	<a class="btn" href="/radarr">
 		<img src="/img/radarr.webp" alt="Radarr">
 		<span class="btn-text" data-desc="Filme">
@@ -221,6 +224,7 @@
 		</span>
 	</a>
 	
+	<!-- Bazarr -->
 	<a class="btn" href="/bazarr">
 		<img src="/img/bazarr.webp" alt="Bazarr">
 		<span class="btn-text" data-desc="Untertitel">
@@ -229,6 +233,7 @@
 		</span>
 	</a>
 	
+	<!-- Tdarr -->
 	<a class="btn" href="/tdarr">
 		<img src="/img/tdarr.webp" alt="Tdarr">
 		<span class="btn-text" data-desc="Optimizing">
@@ -237,6 +242,7 @@
 		</span>
 	</a>
 	
+	<!-- SABnzbd -->
 	<a class="btn" href="/sabnzbd">
 		<img src="/img/sabnzbd.webp" alt="SABnzbd">
 		<span class="btn-text" data-desc="Downloads">
@@ -245,6 +251,7 @@
 		</span>
 	</a>
 	
+	<!-- Jellyfin -->
 	<a class="btn" href="/jellyfin">
 		<img src="/img/jellyfin.webp" alt="Jellyfin">
 		<span class="btn-text" data-desc="Media Server 1">
@@ -253,6 +260,7 @@
 		</span>
 	</a>
 	
+	<!-- Plex -->
 	<a class="btn" href="/plex">
 		<img src="/img/plex.webp" alt="Plex">
 		<span class="btn-text" data-desc="Media Server 2">
@@ -261,6 +269,7 @@
 		</span>
 	</a>
 	
+	<!-- Jellyseerr -->
 	<a class="btn" href="/jellyseerr">
 		<img src="/img/jellyseerr.webp" alt="Jellyseerr">
 		<span class="btn-text" data-desc="Filme finden">
@@ -269,6 +278,7 @@
 		</span>
 	</a>
 	
+	<!-- Start/Stop Jellyseerr -->
 	<div class="btn-row">
 		<a class="btn btn-half btn-green" href="javascript:void(0);" onclick="jellyseerr_start()">
 			<img src="/img/jellyseerr.webp" alt="Start Jellyseerr">
@@ -280,6 +290,7 @@
 		</a>
 	</div>
 	
+	<!-- Shutdown -->
 	<a class="btn btn-danger" href="javascript:void(0);" onclick="shutdown()">
 		<img src="/img/shutdown.webp" alt="Shutdown">
 		<span class="btn-text">Shutdown</span>
