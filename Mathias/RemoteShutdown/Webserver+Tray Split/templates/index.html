@@ -20,55 +20,6 @@
 			margin-bottom: 0.5rem;
 			font-size: 2rem;
 		}
-		/*------------ Buttons -----------*/
-		.btn, .btn-row { box-sizing: border-box; }
-		.btn {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			width: min(90%, 600px);
-			margin: 0.3rem 0;
-			padding: 1rem;
-			font-size: 1.5rem;
-			min-height: 5vh;
-			max-height: 6vh;
-			text-decoration: none;
-			color: white;
-			background: #007BFF;
-			border-radius: 1rem;
-			transition: background 0.2s;
-			cursor: pointer;
-		}
-		.btn img, .btn-half img {
-			max-height: 2.7rem;
-			width: auto;
-			margin-right: 0.8rem;
-			transform: scale(0.9);
-			transition: transform 0.2s;
-		}
-
-		.btn:hover { background: #0056b3; }
-		.btn-danger { background: #dc3545; }
-		.btn-danger:hover { background: #a71d2a; }
-		.btn-green { background: #28a745; }
-		.btn-green:hover { background: #1e7e34; }
-		.btn-red { background: #db4251; }
-		.btn-red:hover { background: #a71d2a; }
-		.btn-row {
-			display: flex;
-			justify-content: space-between;
-			width: min(90%, 600px);
-			margin: 0.3rem 0;
-			gap: 30px;
-		}
-		.btn-half { flex: 1; }
-		.desc {
-			color: lightgray;
-			font-size: 0.9em;
-			font-weight: normal;
-		}
-
-
 		/*------------ Mode Switch -----------*/
 		.switch-container {
 			display: inline-flex;
@@ -101,7 +52,7 @@
 			padding-right: 5px;
 			padding-left: 5px;
 		}
-		  
+		
 		.switch-handle {
 			position: absolute;
 			top: 2px;
@@ -115,7 +66,7 @@
 						width 0.2s ease-in-out,
 						background 0.2s ease-in-out;
 		}
-				  
+				
 		.switch-container:not(.on) .switch-handle {
 			left: 3px;
 			width: 52px;
@@ -136,19 +87,76 @@
 			color: black;
 		}
 
+
+		/*------------ Buttons -----------*/
+		.btn, .btn-row { box-sizing: border-box; }
+		.btn {
+			display: flex;
+			align-items: center;
+			justify-content: left; 
+    		position: relative;
+			width: min(90%, 600px);
+			margin: 0.3rem 0;
+			padding: 1rem;
+			font-size: 1.5rem;
+			min-height: 5vh;
+			max-height: 6vh;
+			text-decoration: none;
+			color: white;
+			background: #2ca5fc;
+			border-radius: 1rem;
+			transition: background 0.2s;
+			cursor: pointer;
+			font-weight: bold;
+		}
+		.btn img, .btn-half img {
+			max-height: 2.7rem;
+			width: auto;
+			margin-right: 0.8rem;
+			transform: scale(0.9);
+			transition: transform 0.2s;
+		}
+
+		.btn:hover { background: #007BFF; }
+		.btn-danger { background: #dc3545; }
+		.btn-danger:hover { background: #a71d2a; }
+		.btn-green { background: #28a745; }
+		.btn-green:hover { background: #1e7e34; }
+		.btn-red { background: #db4251; }
+		.btn-red:hover { background: #a71d2a; }
+		.btn-row {
+			display: flex;
+			justify-content: space-between;
+			width: min(90%, 600px);
+			margin: 0.3rem 0;
+			gap: 30px;
+		}
+		.btn-half { flex: 1; }
+		.desc {
+			color: lightgray;
+			font-size: 0.9em;
+			font-weight: normal;
+		}
+
+
 		/*------------ Status Dot -----------*/
 		.status-dot {
-			display: inline-block;
-			width: 10px;
-			height: 10px;
+			position: absolute;
+			right: 20px; /* distance from right edge */
+			width: 20px;
+			height: 20px;
 			border-radius: 50%;
 			background-color: red; /* default */
-			margin-left: 8px;
-			position: relative;
-			top: -2.5px;
+			top: 50%;
+			transform: translateY(-50%); /* vertically center */
+			border: 0.5px solid black;
 		}
-		.status-dot.online { background-color: #28a745; } /* green */
 		
+		.status-dot.online {
+			background-color: #28a745; /* green */
+		}
+		
+
 		/*-------------------------------------------------
 		  -------------- B I G    S C R E E N -------------
 		  -------------------------------------------------
