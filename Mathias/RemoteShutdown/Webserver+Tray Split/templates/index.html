@@ -144,6 +144,8 @@
 			border-radius: 50%;
 			background-color: red; /* default */
 			margin-left: 8px;
+			position: relative;
+			top: -2.5px;
 		}
 		.status-dot.online { background-color: #28a745; } /* green */
 		
@@ -191,90 +193,91 @@
 		<div class="switch-option left">Noob</div>
 		<div class="switch-option right">Pro</div>
 		<div class="switch-handle"></div>
-	  </div>
-	
+	</div>
+
 	<div id="action-status" style="font-size: 1rem; color: #333; min-height: 1rem;"></div>
 
 	<a class="btn" href="/sonarr">
-		<img src="{{ url_for('static', filename='img/sonarr.png') }}" alt="Sonarr"> 
+		<img src="/img/sonarr.webp" alt="Sonarr">
 		<span class="btn-text" data-desc="Serien">
-		  	<span class="btn-label">Sonarr</span>
-		  	<span class="status-dot" id="status-sonarr"></span>
+			<span class="btn-label">Sonarr</span>
+			<span class="status-dot" id="status-sonarr"></span>
 		</span>
 	</a>
-	  
-	  <a class="btn" href="/radarr">
-		<img src="{{ url_for('static', filename='img/radarr.png') }}" alt="Radarr"> 
+	
+	<a class="btn" href="/radarr">
+		<img src="/img/radarr.webp" alt="Radarr">
 		<span class="btn-text" data-desc="Filme">
-		  	<span class="btn-label">Radarr</span>
-		  	<span class="status-dot" id="status-radarr"></span>
+			<span class="btn-label">Radarr</span>
+			<span class="status-dot" id="status-radarr"></span>
 		</span>
 	</a>
-	  
+	
 	<a class="btn" href="/bazarr">
-		<img src="{{ url_for('static', filename='img/bazarr.png') }}" alt="Bazarr"> 
+		<img src="/img/bazarr.webp" alt="Bazarr">
 		<span class="btn-text" data-desc="Untertitel">
-		  	<span class="btn-label">Bazarr</span>
-		  	<span class="status-dot" id="status-bazarr"></span>
+			<span class="btn-label">Bazarr</span>
+			<span class="status-dot" id="status-bazarr"></span>
 		</span>
 	</a>
-	  
+	
 	<a class="btn" href="/tdarr">
-		<img src="{{ url_for('static', filename='img/tdarr.png') }}" alt="Tdarr"> 
+		<img src="/img/tdarr.webp" alt="Tdarr">
 		<span class="btn-text" data-desc="Optimizing">
-		  	<span class="btn-label">Tdarr</span>
-		  	<span class="status-dot" id="status-tdarr"></span>
+			<span class="btn-label">Tdarr</span>
+			<span class="status-dot" id="status-tdarr"></span>
 		</span>
 	</a>
-	  
+	
 	<a class="btn" href="/sabnzbd">
-		<img src="{{ url_for('static', filename='img/sabnzbd.png') }}" alt="SABnzbd"> 
+		<img src="/img/sabnzbd.webp" alt="SABnzbd">
 		<span class="btn-text" data-desc="Downloads">
-		  	<span class="btn-label">SABnzbd</span>
-		  	<span class="status-dot" id="status-sabnzbd"></span>
+			<span class="btn-label">SABnzbd</span>
+			<span class="status-dot" id="status-sabnzbd"></span>
 		</span>
 	</a>
-	  
+	
 	<a class="btn" href="/jellyfin">
-		<img src="{{ url_for('static', filename='img/jellyfin.png') }}" alt="Jellyfin"> 
+		<img src="/img/jellyfin.webp" alt="Jellyfin">
 		<span class="btn-text" data-desc="Media Server 1">
-		  	<span class="btn-label">Jellyfin</span>
-		  	<span class="status-dot" id="status-jellyfin"></span>
+			<span class="btn-label">Jellyfin</span>
+			<span class="status-dot" id="status-jellyfin"></span>
 		</span>
 	</a>
-	  
+	
 	<a class="btn" href="/plex">
-		<img src="{{ url_for('static', filename='img/plex.png') }}" alt="Plex"> 
+		<img src="/img/plex.webp" alt="Plex">
 		<span class="btn-text" data-desc="Media Server 2">
-		  	<span class="btn-label">Plex</span>
-		  	<span class="status-dot" id="status-plex"></span>
+			<span class="btn-label">Plex</span>
+			<span class="status-dot" id="status-plex"></span>
 		</span>
 	</a>
-	  
+	
 	<a class="btn" href="/jellyseerr">
-		<img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Jellyseerr"> 
+		<img src="/img/jellyseerr.webp" alt="Jellyseerr">
 		<span class="btn-text" data-desc="Filme finden">
-		  	<span class="btn-label">Jellyseerr</span>
-		  	<span class="status-dot" id="status-jellyseerr"></span>
+			<span class="btn-label">Jellyseerr</span>
+			<span class="status-dot" id="status-jellyseerr"></span>
 		</span>
 	</a>
-	  
-
+	
 	<div class="btn-row">
 		<a class="btn btn-half btn-green" href="javascript:void(0);" onclick="triggerAction('/jellyseerr-start')">
-			<img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Start Jellyseerr"> 
+			<img src="/img/jellyseerr.webp" alt="Start Jellyseerr">
 			<span class="btn-text">Start</span>
 		</a>
 		<a class="btn btn-half btn-red" href="javascript:void(0);" onclick="triggerAction('/jellyseerr-stop')">
-			<img src="{{ url_for('static', filename='img/jellyseerr.png') }}" alt="Stop Jellyseerr"> 
+			<img src="/img/jellyseerr.webp" alt="Stop Jellyseerr">
 			<span class="btn-text">Stop</span>
 		</a>
 	</div>
-
+	
 	<a class="btn btn-danger" href="javascript:void(0);" onclick="shutdown()">
-		<img src="{{ url_for('static', filename='img/shutdown.png') }}" alt="Shutdown"> 
+		<img src="/img/shutdown.webp" alt="Shutdown">
 		<span class="btn-text">Shutdown</span>
 	</a>
+	
+
 
 
 
