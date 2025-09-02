@@ -19,12 +19,14 @@
 
         /* Grid Container (max 4 horizontally) */
         .grid {
-			display: grid;
-			grid-template-columns: repeat(4, 220px); /* fixed width for each tile */
-			gap: 2rem; /* space between tiles */
-			justify-content: center; /* center tiles horizontally */
-			padding: 1rem;
-		}
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.8rem 1.3rem;
+            justify-content: center;
+            padding: 1rem;
+            max-width: 1000px; /* ensures max 4 per row (4x220px + gaps) */
+            margin: 0 auto;
+        }
 
         /* Tile Buttons */
         .tile {
@@ -39,7 +41,7 @@
             border-radius: 15px;
             color: white;
             font-weight: bold;
-            font-size: 1.5rem;
+            font-size: 1.7rem;
             cursor: pointer;
             transition: transform 0.2s, background-color 0.3s;
             text-decoration: none;
@@ -58,10 +60,18 @@
 		}
         .tile-desc {
 			font-weight: normal;
-			font-size: 0.5rem;
+			font-size: 1.2rem;
 			color: rgba(255,255,255,0.85);
 			visibility: hidden;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.1s ease, opacity 0.3s ease;
 		}
+        .tile-desc.visible {
+            max-height: 30px; /* big enough for your text */
+            opacity: 1;
+            visibility: visible;
+        }
 		
 		/* Pro mode: show description */
 		.pro .tile-desc {
@@ -112,7 +122,7 @@
         }
         .switch-container.on .switch-handle {
             left: 73px;
-            width: 48px;
+            width: 49px;
             background: #66bfff; 
         }
 
@@ -126,23 +136,89 @@
         .switch-container.on .switch-option.right { color: black; }
         .switch-container:not(.on) .switch-option.left { color: black; }
 
-        /* Action Text */
-        #action-status {
-            font-size: 1rem;
-            color: #333;
-            min-height: 1rem;
-            margin-bottom: 0.2rem;
+        /* Container for toggles */
+        .toggle-row {
+            display: flex;
+            justify-content: center; /* center the group horizontally */
+            align-items: center;     /* align vertically */
+            gap: 1rem;               /* space between the two toggles */
+            margin-bottom: 0rem;
         }
+
+        #langToggle .switch-option.left {
+            max-width: calc(90px * 4/7);
+        }
+
+        #langToggle .switch-option.right {
+            max-width: calc(90px * 3/7);
+        }
+
+        /* Slide handle */
+        #langToggle.on .switch-handle {
+            left: 73px;
+            width: 49px;
+            background: #66bfff;
+        }
+
+        #langToggle:not(.on) .switch-handle {
+            left: 3px;
+            width: 60px;
+            background: #8dd9a8;
+        }
+
+        #langToggle.on .switch-option.right { color: black; }
+        #langToggle:not(.on) .switch-option.left { color: black; }
+
+
+        /*  POCO X6 Pro */
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: repeat(3, calc((90% - 20px) / 3));
+                margin-left: -15px;
+                gap: 10px 25px;
+            }
+            .tile {
+                font-size: 1.2rem;
+                padding: 0.8rem;
+            }
+            .tile img {
+                width: 45px;
+                height: 45px;
+            }
+
+            h1 {
+                margin: 0.3rem;
+                font-size: 2rem;
+            }
+            .switch-container {
+                margin-bottom: 0.3rem;
+            }
+            #action-status {
+                margin-bottom: -0.5rem;
+            }
+            .tile-desc {
+                font-size: 1rem;
+            }
+        }
+
     </style>
 </head>
 <body>
     <h1>Mathias' Mediaserver</h1>
 
-    <!-- Toggle Button -->
-    <div id="toggleSwitch" class="switch-container">
-        <div class="switch-option left">Noob</div>
-        <div class="switch-option right">Pro</div>
-        <div class="switch-handle"></div>
+    <!-- Toggle Button and Language -->
+    <div class="toggle-row">
+        <div id="toggleSwitch" class="switch-container">
+            <div class="switch-option left">Noob</div>
+            <div class="switch-option right">Pro</div>
+            <div class="switch-handle"></div>
+        </div>
+    
+        <div id="langToggle" class="switch-container on">
+            <div class="switch-option left">DE</div>
+            <div class="switch-option right">GB</div>
+            <div class="switch-handle"></div>
+        </div>
     </div>
 
     <!-- Status / Action Text -->
@@ -153,106 +229,160 @@
         <a class="tile" id="tile-sonarr" href="/sonarr">
             <img src="/img/sonarr.webp" alt="Sonarr">
             <div class="tile-name">Sonarr</div>
-            <div class="tile-desc" data-desc="Serien"></div>
+            <div class="tile-desc" data-desc-de="Serien" data-desc-en="Series"></div>
         </a>
         <a class="tile" id="tile-radarr" href="/radarr">
             <img src="/img/radarr.webp" alt="Radarr">
             <div class="tile-name">Radarr</div>
-            <div class="tile-desc" data-desc="Filme"></div>
+            <div class="tile-desc" data-desc-de="Filme" data-desc-en="Movies"></div>
         </a>
         <a class="tile" id="tile-bazarr" href="/bazarr">
             <img src="/img/bazarr.webp" alt="Bazarr">
             <div class="tile-name">Bazarr</div>
-            <div class="tile-desc" data-desc="Untertitel"></div>
+            <div class="tile-desc" data-desc-de="Untertitel" data-desc-en="Subtitles"></div>
         </a>
         <a class="tile" id="tile-tdarr" href="/tdarr">
             <img src="/img/tdarr.webp" alt="Tdarr">
             <div class="tile-name">Tdarr</div>
-            <div class="tile-desc" data-desc="Optimieren"></div>
+            <div class="tile-desc" data-desc-de="Transkodieren" data-desc-en="Re-encode"></div>
         </a>
         <a class="tile" id="tile-sabnzbd" href="/sabnzbd">
             <img src="/img/sabnzbd.webp" alt="SABnzbd">
             <div class="tile-name">SABnzbd</div>
-            <div class="tile-desc" data-desc="Downloads"></div>
+            <div class="tile-desc" data-desc-de="Downloads" data-desc-en="Downloads"></div>
         </a>
         <a class="tile" id="tile-jellyfin" href="/jellyfin">
             <img src="/img/jellyfin.webp" alt="Jellyfin">
             <div class="tile-name">Jellyfin</div>
-            <div class="tile-desc" data-desc="Media Server 1"></div>
+            <div class="tile-desc" data-desc-de="Streamen" data-desc-en="Streaming"></div>
         </a>
         <a class="tile" id="tile-plex" href="/plex">
             <img src="/img/plex.webp" alt="Plex">
             <div class="tile-name">Plex</div>
-            <div class="tile-desc" data-desc="Media Server 2"></div>
+            <div class="tile-desc" data-desc-de="Streamen" data-desc-en="Streaming"></div>
         </a>
         <a class="tile" id="tile-jellyseerr" href="/jellyseerr">
             <img src="/img/jellyseerr.webp" alt="Jellyseerr">
             <div class="tile-name">Jellyseerr</div>
-            <div class="tile-desc" data-desc="Filme finden"></div>
+            <div class="tile-desc" data-desc-de="Suchen" data-desc-en="Discover"></div>
         </a>
-    </div>
 
-    <!-- Start/Stop & Shutdown Buttons -->
-    <div class="grid">
-        <a class="tile" style="background-color: #28a745;" href="javascript:void(0);" onclick="jellyseerr_start()">
-            <img src="/img/jellyseerr.webp" alt="Start Jellyseerr">
-            <div class="tile-name">Start Jellyseerr</div>
+        <!-- Start/Stop & Shutdown Buttons -->
+        <a class="tile" id="btn-jellyseerr" style="background-color: #17b84f;" href="javascript:void(0);" onclick="toggleJellyseerr()">
+            <img src="/img/jellyseerr.webp" alt="Toggle Jellyseerr">
+            <div class="tile-name" id="btn-jellyseerr-label">Start</div>
+            <div class="tile-desc"></div>
         </a>
-        <a class="tile" style="background-color: #db4251;" href="javascript:void(0);" onclick="jellyseerr_stop()">
-            <img src="/img/jellyseerr.webp" alt="Stop Jellyseerr">
-            <div class="tile-name">Stop Jellyseerr</div>
-        </a>
-        <a class="tile" style="background-color: #dc3545;" href="javascript:void(0);" onclick="shutdown()">
+        <a class="tile" style="background-color: #e43e4f;" href="javascript:void(0);" onclick="shutdown()">
             <img src="/img/shutdown.webp" alt="Shutdown">
             <div class="tile-name">Shutdown</div>
+            <div class="tile-desc"></div>
         </a>
     </div>
 
+
+    
+        
     <script>
         const actionText = document.getElementById("action-status");
-		const toggleSwitch = document.getElementById("toggleSwitch");
-		const tiles = document.querySelectorAll(".tile");
-		let noobMode = true; // start in Noob mode
-		toggleSwitch.classList.add("on");
-
-		// Initialize tile descriptions
-		tiles.forEach(tile => {
-			const descDiv = tile.querySelector(".tile-desc");
-			if (descDiv) {
-				descDiv.textContent = descDiv.dataset.desc || "";
-				descDiv.style.visibility = !noobMode ? "visible" : "hidden";
-			}
-		});
-
-		// Toggle Noob/Pro mode
-		toggleSwitch.addEventListener("click", () => {
-			noobMode = !noobMode;
-			toggleSwitch.classList.toggle("on", noobMode);
-
-			tiles.forEach(tile => {
-				const descDiv = tile.querySelector(".tile-desc");
-				if (descDiv) {
-					descDiv.style.visibility = !noobMode ? "visible" : "hidden";
-				}
-			});
-		});
-
-
-
-
+        const langToggle = document.getElementById("langToggle");
+        const toggleSwitch = document.getElementById("toggleSwitch");
+        const tiles = document.querySelectorAll(".tile");
+        
+        let noobMode = false; // start in Noob mode
+        let lang = "en"; // start in English
+        
+        toggleSwitch.classList.add("on");
+        
+        // Function to update tile descriptions
+        function updateTileDescriptions() {
+            tiles.forEach(tile => {
+                const descDiv = tile.querySelector(".tile-desc");
+                if (descDiv) {
+                    if (noobMode) {
+                        // set text first
+                        descDiv.textContent = (lang === "en") ? descDiv.dataset.descEn : descDiv.dataset.descDe;
+                        // then show it
+                        descDiv.classList.add("visible");
+                    } else {
+                        descDiv.classList.remove("visible");
+                    }
+                }
+            });
+}
+        
+        
+        // Initialize tile descriptions
+        updateTileDescriptions();
+        
+        // Toggle Noob/Pro mode
+        toggleSwitch.addEventListener("click", () => {
+            noobMode = !noobMode;
+            toggleSwitch.classList.toggle("on", !noobMode);
+            updateTileDescriptions();
+        });
+        
+        // Toggle language
+        langToggle.addEventListener("click", () => {
+            lang = (lang === "de") ? "en" : "de";
+            langToggle.classList.toggle("on", lang === "en");
+        
+            // Update tiles
+            document.querySelectorAll(".tile").forEach(tile => {
+                const desc = tile.querySelector(".tile-desc");
+                if(desc) {
+                    desc.textContent = (lang === "en") ? desc.dataset.descEn : desc.dataset.descDe;
+                }
+            });
+        });
+        
 
 
         // Fetch service status
         function updateServiceStatus() {
             fetch('/service-status')
-                .then(response => response.json())
-                .then(data => {
-                    for (const [service, running] of Object.entries(data)) {
-                        const tile = document.getElementById(`tile-${service}`);
-                        if (tile) {
-                            tile.style.backgroundColor = running ? '#28a745' : '#dc3545';
-                        }
+            .then(response => response.json())
+            .then(data => {
+                for (const [service, running] of Object.entries(data)) {
+                    const tile = document.getElementById(`tile-${service}`);
+                    if (tile) {
+                        tile.style.backgroundColor = running ? '#28a745' : '#dc3545';
                     }
+                }
+    
+                // Update Jellyseerr button
+                const jellyRunning = data["jellyseerr"];
+                const btn = document.getElementById("btn-jellyseerr");
+                const label = document.getElementById("btn-jellyseerr-label");
+    
+                if (jellyRunning) {
+                    btn.style.backgroundColor = "#e43e4f"; // red for stop
+                    label.textContent = "Stop";
+                } else {
+                    btn.style.backgroundColor = "#17b84f"; // green for start
+                    label.textContent = "Start";
+                }
+            });
+        }
+
+        function toggleJellyseerr() {
+            const pw = prompt("Enter password for Jellyseerr:");
+            if (!pw) return;
+        
+            fetch('/service-status')
+                .then(r => r.json())
+                .then(status => {
+                    const running = status["jellyseerr"];
+                    const url = running ? "/jellyseerr-stop" : "/jellyseerr-start";
+        
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({password: pw})
+                    })
+                    .then(r => r.text())
+                    .then(d => actionText.textContent = d)
+                    .catch(e => actionText.textContent = "Error: " + e);
                 });
         }
 
@@ -274,25 +404,6 @@
             triggerAction('/shutdown', "Processing shutdown...");
         }
 
-        function jellyseerr_start() {
-            const pw = prompt("Enter password to start Jellyseerr:");
-            if (!pw) return;
-            fetch('/jellyseerr-start', {
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({password: pw})
-            }).then(r => r.text()).then(d => actionText.textContent = d).catch(e => actionText.textContent = e);
-        }
-
-        function jellyseerr_stop() {
-            const pw = prompt("Enter password to stop Jellyseerr:");
-            if (!pw) return;
-            fetch('/jellyseerr-stop', {
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({password: pw})
-            }).then(r => r.text()).then(d => actionText.textContent = d).catch(e => actionText.textContent = e);
-        }
     </script>
 </body>
 </html>
