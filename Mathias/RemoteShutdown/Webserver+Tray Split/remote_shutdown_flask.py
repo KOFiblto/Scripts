@@ -41,7 +41,6 @@ def get_local_ip():
         s.close()
     return ip
 
-
 # ===== Check if Service is listening on Port (Running/Not running) =====
 def is_port_open(port):
     sock = socket.socket()
@@ -59,7 +58,7 @@ def update_status_cache():
     global status_cache
     while True:
         status_cache = {name: is_port_open(port) for name, port in PORT_MAPPING.items()}
-        time.sleep(1)
+        time.sleep(5)
 
 
 # ===== Redirect to localhost or <Laptop IP> =====
@@ -218,7 +217,7 @@ def shutdown():
     if not check_password(password):
         return "Incorrect password! Shutdown aborted.", 403
    
-    # os.system("shutdown /s /f /t 0")
+    os.system("shutdown /s /f /t 0")
     return "Shutting down..."
 
 

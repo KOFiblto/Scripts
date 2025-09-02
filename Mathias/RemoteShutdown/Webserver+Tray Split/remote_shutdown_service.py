@@ -19,14 +19,10 @@ if __name__ == "__main__":
 
 
 
-############# T O D O #############
+########################## PY -> EXE ##########################
 
-# Status Dots right bound
+# -- Tray
+# pyinstaller --onefile --add-data "static;static" --windowed --icon "D:\Scripts\Mathias\_Icons\tray_icon.ico"                                       "D:\Scripts\Mathias\RemoteShutdown\Webserver+Tray Split\remote_shutdown_tray.py"
 
-# Start / Stop Jellyseer require password
-
-# Status Dots on Tray
-
-# Tray Upgrade (Like TranslucentTB)
-
-#
+# -- Webserver
+# pyinstaller --onefile --add-data "static;static" --windowed --icon "D:\Scripts\Mathias\_Icons\RemoteShutdown.ico" --add-data "templates;templates" "D:\Scripts\Mathias\RemoteShutdown\Webserver+Tray Split\remote_shutdown_service.py"

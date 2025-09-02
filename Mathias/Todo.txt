@@ -1,0 +1,64 @@
+
+########################## T O D O ##########################
+
+# New Website Layout for efficiency
+#  - Square
+#  - BG Color = Status (lightgreen / lightred)
+#   ####################
+#   #    ----------    #
+#   #    -  ICON  -    #
+#   #    -        -    #
+#   #    ----------    #
+#   #     N A M E      #
+#   #       DESC       #
+#   #                  #
+#   ####################
+
+
+########################## D O N E ##########################
+
+# Status Dots Leftbound
+# -- September 2
+
+# Start / Stop Jellyseer require password
+# -- September 2
+
+# Status Dots on Tray
+# -- September 2
+
+# Tray Upgrade 
+#  - (Like TranslucentTB)
+# -- September 2
+
+
+
+.-------------------------------------------------------------------.
+|                             TODO LIST                             |
+'-------------------------------------------------------------------'
+
+.---------------- Remote_Shutdown ---------------.
+
+ [x] Status Dots Rightbound Web - September 02
+ 
+ [x] Start / Stop Jellyseer require password - September 02
+ 
+ [x] Status Dots on Tray - September 02
+	 - With Emojis
+
+ [x] Tray Upgrade - September 02
+     - (Like TranslucentTB)
+    
+ [ ] New Website Layout for efficiency - September 02
+     - Square
+	 - BG Color = Status (lightgreen / lightred)
+		##################
+		#   ----------   #
+		#   -  ICON  -   #
+		#   -        -   #
+		#   ----------   #
+		#    N A M E     #
+		#     DESC       #
+		#                #
+		##################
+	
+'------------------------------------------------'
