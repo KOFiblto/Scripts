@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Server Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/RemoteShutdown.png') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0.1rem;
+        }
+        h1 {
+            margin: 1rem 0;
+            font-size: 2rem;
+        }
+
+        /* Grid Container (max 4 horizontally) */
+        .grid {
+			display: grid;
+			grid-template-columns: repeat(4, 220px); /* fixed width for each tile */
+			gap: 2rem; /* space between tiles */
+			justify-content: center; /* center tiles horizontally */
+			padding: 1rem;
+		}
+
+        /* Tile Buttons */
+        .tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 90%;
+            max-width: 300px;
+            padding: 1rem;
+			padding-bottom: 1rem;
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s;
+            text-decoration: none;
+        }
+        .tile img {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 0.5rem;
+        }
+        .tile:hover {
+            transform: scale(1.05);
+        }
+
+        .tile-name {
+			margin-bottom: 0.5rem;
+		}
+        .tile-desc {
+			font-weight: normal;
+			font-size: 0.5rem;
+			color: rgba(255,255,255,0.85);
+			visibility: hidden;
+		}
+		
+		/* Pro mode: show description */
+		.pro .tile-desc {
+			visibility: visible;
+		}
+
+        /* Toggle Switch */
+        .switch-container {
+            display: inline-flex;
+            align-items: space-between;
+			align-content: space-between;
+            background: #e0e0e0;
+            border-radius: 20px;
+            padding: 7px;
+            cursor: pointer;
+            user-select: none;
+            width: 110px;
+            position: relative;
+            margin-bottom: 1rem;
+			gap: 20px;
+        }
+
+        .switch-option {
+            flex: 1;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #555;
+            z-index: 1;
+            transition: color 0.3s;
+        }
+
+        .switch-handle {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 48px;
+            height: 26px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: left 0.2s ease-in-out, width 0.2s ease-in-out, background 0.2s ease-in-out;
+        }
+
+        .switch-container:not(.on) .switch-handle {
+            left: 3px;
+            width: 60px;
+            background: #8dd9a8;
+        }
+        .switch-container.on .switch-handle {
+            left: 73px;
+            width: 48px;
+            background: #66bfff; 
+        }
+
+		.switch-option.right {
+			max-width: calc(90px * 3/7);
+		}
+		.switch-option.left {
+			max-width: calc(90px * 4/7);
+		}
+
+        .switch-container.on .switch-option.right { color: black; }
+        .switch-container:not(.on) .switch-option.left { color: black; }
+
+        /* Action Text */
+        #action-status {
+            font-size: 1rem;
+            color: #333;
+            min-height: 1rem;
+            margin-bottom: 0.2rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mathias' Mediaserver</h1>
+
+    <!-- Toggle Button -->
+    <div id="toggleSwitch" class="switch-container">
+        <div class="switch-option left">Noob</div>
+        <div class="switch-option right">Pro</div>
+        <div class="switch-handle"></div>
+    </div>
+
+    <!-- Status / Action Text -->
+    <div id="action-status"></div>
+
+    <!-- Grid Layout -->
+    <div class="grid">
+        <a class="tile" id="tile-sonarr" href="/sonarr">
+            <img src="/img/sonarr.webp" alt="Sonarr">
+            <div class="tile-name">Sonarr</div>
+            <div class="tile-desc" data-desc="Serien"></div>
+        </a>
+        <a class="tile" id="tile-radarr" href="/radarr">
+            <img src="/img/radarr.webp" alt="Radarr">
+            <div class="tile-name">Radarr</div>
+            <div class="tile-desc" data-desc="Filme"></div>
+        </a>
+        <a class="tile" id="tile-bazarr" href="/bazarr">
+            <img src="/img/bazarr.webp" alt="Bazarr">
+            <div class="tile-name">Bazarr</div>
+            <div class="tile-desc" data-desc="Untertitel"></div>
+        </a>
+        <a class="tile" id="tile-tdarr" href="/tdarr">
+            <img src="/img/tdarr.webp" alt="Tdarr">
+            <div class="tile-name">Tdarr</div>
+            <div class="tile-desc" data-desc="Optimieren"></div>
+        </a>
+        <a class="tile" id="tile-sabnzbd" href="/sabnzbd">
+            <img src="/img/sabnzbd.webp" alt="SABnzbd">
+            <div class="tile-name">SABnzbd</div>
+            <div class="tile-desc" data-desc="Downloads"></div>
+        </a>
+        <a class="tile" id="tile-jellyfin" href="/jellyfin">
+            <img src="/img/jellyfin.webp" alt="Jellyfin">
+            <div class="tile-name">Jellyfin</div>
+            <div class="tile-desc" data-desc="Media Server 1"></div>
+        </a>
+        <a class="tile" id="tile-plex" href="/plex">
+            <img src="/img/plex.webp" alt="Plex">
+            <div class="tile-name">Plex</div>
+            <div class="tile-desc" data-desc="Media Server 2"></div>
+        </a>
+        <a class="tile" id="tile-jellyseerr" href="/jellyseerr">
+            <img src="/img/jellyseerr.webp" alt="Jellyseerr">
+            <div class="tile-name">Jellyseerr</div>
+            <div class="tile-desc" data-desc="Filme finden"></div>
+        </a>
+    </div>
+
+    <!-- Start/Stop & Shutdown Buttons -->
+    <div class="grid">
+        <a class="tile" style="background-color: #28a745;" href="javascript:void(0);" onclick="jellyseerr_start()">
+            <img src="/img/jellyseerr.webp" alt="Start Jellyseerr">
+            <div class="tile-name">Start Jellyseerr</div>
+        </a>
+        <a class="tile" style="background-color: #db4251;" href="javascript:void(0);" onclick="jellyseerr_stop()">
+            <img src="/img/jellyseerr.webp" alt="Stop Jellyseerr">
+            <div class="tile-name">Stop Jellyseerr</div>
+        </a>
+        <a class="tile" style="background-color: #dc3545;" href="javascript:void(0);" onclick="shutdown()">
+            <img src="/img/shutdown.webp" alt="Shutdown">
+            <div class="tile-name">Shutdown</div>
+        </a>
+    </div>
+
+    <script>
+        const actionText = document.getElementById("action-status");
+		const toggleSwitch = document.getElementById("toggleSwitch");
+		const tiles = document.querySelectorAll(".tile");
+		let noobMode = true; // start in Noob mode
+		toggleSwitch.classList.add("on");
+
+		// Initialize tile descriptions
+		tiles.forEach(tile => {
+			const descDiv = tile.querySelector(".tile-desc");
+			if (descDiv) {
+				descDiv.textContent = descDiv.dataset.desc || "";
+				descDiv.style.visibility = !noobMode ? "visible" : "hidden";
+			}
+		});
+
+		// Toggle Noob/Pro mode
+		toggleSwitch.addEventListener("click", () => {
+			noobMode = !noobMode;
+			toggleSwitch.classList.toggle("on", noobMode);
+
+			tiles.forEach(tile => {
+				const descDiv = tile.querySelector(".tile-desc");
+				if (descDiv) {
+					descDiv.style.visibility = !noobMode ? "visible" : "hidden";
+				}
+			});
+		});
+
+
+
+
+
+
+        // Fetch service status
+        function updateServiceStatus() {
+            fetch('/service-status')
+                .then(response => response.json())
+                .then(data => {
+                    for (const [service, running] of Object.entries(data)) {
+                        const tile = document.getElementById(`tile-${service}`);
+                        if (tile) {
+                            tile.style.backgroundColor = running ? '#28a745' : '#dc3545';
+                        }
+                    }
+                });
+        }
+
+        updateServiceStatus();
+        setInterval(updateServiceStatus, 5000);
+
+        // Start/Stop/Shutdown functions
+        function triggerAction(url, msg) {
+            actionText.textContent = msg;
+            fetch(url, {method:'POST'})
+                .then(r => r.text())
+                .then(d => { actionText.textContent = d; })
+                .catch(e => { actionText.textContent = 'Error: ' + e; });
+        }
+
+        function shutdown() {
+            const pw = prompt("Enter password to shut down this PC:");
+            if (!pw) return;
+            triggerAction('/shutdown', "Processing shutdown...");
+        }
+
+        function jellyseerr_start() {
+            const pw = prompt("Enter password to start Jellyseerr:");
+            if (!pw) return;
+            fetch('/jellyseerr-start', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({password: pw})
+            }).then(r => r.text()).then(d => actionText.textContent = d).catch(e => actionText.textContent = e);
+        }
+
+        function jellyseerr_stop() {
+            const pw = prompt("Enter password to stop Jellyseerr:");
+            if (!pw) return;
+            fetch('/jellyseerr-stop', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({password: pw})
+            }).then(r => r.text()).then(d => actionText.textContent = d).catch(e => actionText.textContent = e);
+        }
+    </script>
+</body>
+</html>
