@@ -4,7 +4,14 @@
     <title>Server Control</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/RemoteShutdown.png') }}">
+
+    ============
     <style>
+        /* ========================================= /*
+        /* ================  C S S ================= /*
+        /* ========================================= /*
+
+        /* ===== Body & Heading ===== /*
         body {
             font-family: Arial, sans-serif;
             text-align: center;
@@ -17,18 +24,18 @@
             font-size: 2rem;
         }
 
-        /* Grid Container (max 4 horizontally) */
+        /* ===== Grid Container (Tiles) ===== */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 0.8rem 1.3rem;
             justify-content: center;
             padding: 1rem;
-            max-width: 1000px; /* ensures max 4 per row (4x220px + gaps) */
+            max-width: 1000px;
             margin: 0 auto;
         }
 
-        /* Tile Buttons */
+        /* ===== Tile Buttons ===== */
         .tile {
             display: flex;
             flex-direction: column;
@@ -37,7 +44,6 @@
             width: 90%;
             max-width: 300px;
             padding: 1rem;
-			padding-bottom: 1rem;
             border-radius: 15px;
             color: white;
             font-weight: bold;
@@ -55,34 +61,28 @@
             transform: scale(1.05);
         }
 
-        .tile-name {
-			margin-bottom: 0.5rem;
-		}
+        /* ===== Tile Texts ===== */
+        .tile-name { margin-bottom: 0.5rem; }
         .tile-desc {
-			font-weight: normal;
-			font-size: 1.2rem;
-			color: rgba(255,255,255,0.85);
-			visibility: hidden;
+            font-weight: normal;
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.85);
+            visibility: hidden;
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.1s ease, opacity 0.3s ease;
-		}
+        }
         .tile-desc.visible {
-            max-height: 30px; /* big enough for your text */
+            max-height: 30px;
             opacity: 1;
             visibility: visible;
         }
-		
-		/* Pro mode: show description */
-		.pro .tile-desc {
-			visibility: visible;
-		}
+        .pro .tile-desc { visibility: visible; }
 
-        /* Toggle Switch */
+        /* ===== Toggle Switch ===== */
         .switch-container {
             display: inline-flex;
             align-items: space-between;
-			align-content: space-between;
             background: #e0e0e0;
             border-radius: 20px;
             padding: 7px;
@@ -91,9 +91,8 @@
             width: 110px;
             position: relative;
             margin-bottom: 1rem;
-			gap: 20px;
+            gap: 20px;
         }
-
         .switch-option {
             flex: 1;
             text-align: center;
@@ -102,7 +101,6 @@
             z-index: 1;
             transition: color 0.3s;
         }
-
         .switch-handle {
             position: absolute;
             top: 2px;
@@ -114,7 +112,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             transition: left 0.2s ease-in-out, width 0.2s ease-in-out, background 0.2s ease-in-out;
         }
-
         .switch-container:not(.on) .switch-handle {
             left: 3px;
             width: 60px;
@@ -123,97 +120,55 @@
         .switch-container.on .switch-handle {
             left: 73px;
             width: 49px;
-            background: #66bfff; 
+            background: #66bfff;
         }
-
-		.switch-option.right {
-			max-width: calc(90px * 3/7);
-		}
-		.switch-option.left {
-			max-width: calc(90px * 4/7);
-		}
-
+        .switch-option.left { max-width: calc(90px * 4/7); }
+        .switch-option.right { max-width: calc(90px * 3/7); }
         .switch-container.on .switch-option.right { color: black; }
         .switch-container:not(.on) .switch-option.left { color: black; }
 
-        /* Container for toggles */
+        /* ===== Toggle Row Container ===== */
         .toggle-row {
             display: flex;
-            justify-content: center; /* center the group horizontally */
-            align-items: center;     /* align vertically */
-            gap: 1rem;               /* space between the two toggles */
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
             margin-bottom: 0rem;
         }
 
-        #langToggle .switch-option.left {
-            max-width: calc(90px * 4/7);
-        }
-
-        #langToggle .switch-option.right {
-            max-width: calc(90px * 3/7);
-        }
-
-        /* Slide handle */
-        #langToggle.on .switch-handle {
-            left: 73px;
-            width: 49px;
-            background: #66bfff;
-        }
-
-        #langToggle:not(.on) .switch-handle {
-            left: 3px;
-            width: 60px;
-            background: #8dd9a8;
-        }
-
-        #langToggle.on .switch-option.right { color: black; }
-        #langToggle:not(.on) .switch-option.left { color: black; }
-
-
-        /*  POCO X6 Pro */
+        /* ===== Responsive POCO X6 Pro ===== */
         @media (max-width: 600px) {
             .grid {
                 grid-template-columns: repeat(3, calc((90% - 20px) / 3));
                 margin-left: -15px;
                 gap: 10px 25px;
             }
-            .tile {
-                font-size: 1.2rem;
-                padding: 0.8rem;
-            }
-            .tile img {
-                width: 45px;
-                height: 45px;
-            }
-
-            h1 {
-                margin: 0.3rem;
-                font-size: 2rem;
-            }
-            .switch-container {
-                margin-bottom: 0.3rem;
-            }
-            #action-status {
-                margin-bottom: -0.5rem;
-            }
-            .tile-desc {
-                font-size: 1rem;
-            }
+            .tile { font-size: 1.2rem; padding: 0.8rem; }
+            .tile img { width: 45px; height: 45px; }
+            h1 { margin: 0.3rem; font-size: 2rem; }
+            .switch-container { margin-bottom: 0.3rem; }
+            .tile-desc { font-size: 1rem; }
         }
-
     </style>
 </head>
+
 <body>
+    <!-- ========================================= -->
+    <!-- ================  H T M L =============== -->
+    <!-- ========================================= -->
+    
+    <!-- ===== Page Heading ===== -->
     <h1>Mathias' Mediaserver</h1>
 
-    <!-- Toggle Button and Language -->
+    <!-- ===== Toggle Switches ===== -->
     <div class="toggle-row">
+        <!-- Noob / Pro Toggle -->
         <div id="toggleSwitch" class="switch-container">
             <div class="switch-option left">Noob</div>
             <div class="switch-option right">Pro</div>
             <div class="switch-handle"></div>
         </div>
-    
+        <!-- Language Toggle -->
         <div id="langToggle" class="switch-container on">
             <div class="switch-option left">DE</div>
             <div class="switch-option right">GB</div>
@@ -221,11 +176,12 @@
         </div>
     </div>
 
-    <!-- Status / Action Text -->
+    <!-- ===== Status / Action Text ===== -->
     <div id="action-status"></div>
 
-    <!-- Grid Layout -->
+    <!-- ===== Grid Layout (Service Tiles) ===== -->
     <div class="grid">
+        <!-- ===== Standard Service Tiles ===== -->
         <a class="tile" id="tile-sonarr" href="/sonarr">
             <img src="/img/sonarr.webp" alt="Sonarr">
             <div class="tile-name">Sonarr</div>
@@ -267,7 +223,7 @@
             <div class="tile-desc" data-desc-de="Suchen" data-desc-en="Discover"></div>
         </a>
 
-        <!-- Start/Stop & Shutdown Buttons -->
+        <!-- ===== Start/Stop & Shutdown Buttons ===== -->
         <a class="tile" id="btn-jellyseerr" style="background-color: #17b84f;" href="javascript:void(0);" onclick="toggleJellyseerr()">
             <img src="/img/jellyseerr.webp" alt="Toggle Jellyseerr">
             <div class="tile-name" id="btn-jellyseerr-label">Start</div>
@@ -279,102 +235,93 @@
             <div class="tile-desc"></div>
         </a>
     </div>
-
-
-    
-        
     <script>
+        /* ========================================= */
+        /* ========= J A V A   S C R I P T ========= */
+        /* ========================================= */
+
+        // ===== Elements & Variables =====
         const actionText = document.getElementById("action-status");
         const langToggle = document.getElementById("langToggle");
         const toggleSwitch = document.getElementById("toggleSwitch");
         const tiles = document.querySelectorAll(".tile");
-        
-        let noobMode = false; // start in Noob mode
-        let lang = "en"; // start in English
-        
+
+        let noobMode = false; // default Noob mode
+        let lang = "en";       // default English
+
         toggleSwitch.classList.add("on");
-        
-        // Function to update tile descriptions
+
+        // ===== Update Tile Descriptions =====
         function updateTileDescriptions() {
             tiles.forEach(tile => {
                 const descDiv = tile.querySelector(".tile-desc");
                 if (descDiv) {
                     if (noobMode) {
-                        // set text first
                         descDiv.textContent = (lang === "en") ? descDiv.dataset.descEn : descDiv.dataset.descDe;
-                        // then show it
                         descDiv.classList.add("visible");
                     } else {
                         descDiv.classList.remove("visible");
                     }
                 }
             });
-}
-        
-        
-        // Initialize tile descriptions
+        }
         updateTileDescriptions();
-        
-        // Toggle Noob/Pro mode
+
+        // ===== Toggle Noob/Pro Mode =====
         toggleSwitch.addEventListener("click", () => {
             noobMode = !noobMode;
             toggleSwitch.classList.toggle("on", !noobMode);
             updateTileDescriptions();
         });
-        
-        // Toggle language
+
+        // ===== Toggle Language =====
         langToggle.addEventListener("click", () => {
             lang = (lang === "de") ? "en" : "de";
             langToggle.classList.toggle("on", lang === "en");
-        
-            // Update tiles
-            document.querySelectorAll(".tile").forEach(tile => {
+
+            tiles.forEach(tile => {
                 const desc = tile.querySelector(".tile-desc");
-                if(desc) {
-                    desc.textContent = (lang === "en") ? desc.dataset.descEn : desc.dataset.descDe;
-                }
+                if(desc) desc.textContent = (lang === "en") ? desc.dataset.descEn : desc.dataset.descDe;
             });
         });
-        
 
-
-        // Fetch service status
+        // ===== Fetch Service Status & Update Tiles =====
         function updateServiceStatus() {
             fetch('/service-status')
             .then(response => response.json())
             .then(data => {
                 for (const [service, running] of Object.entries(data)) {
                     const tile = document.getElementById(`tile-${service}`);
-                    if (tile) {
-                        tile.style.backgroundColor = running ? '#28a745' : '#dc3545';
-                    }
+                    if (tile) tile.style.backgroundColor = running ? '#28a745' : '#dc3545';
                 }
-    
-                // Update Jellyseerr button
+
                 const jellyRunning = data["jellyseerr"];
                 const btn = document.getElementById("btn-jellyseerr");
                 const label = document.getElementById("btn-jellyseerr-label");
-    
+
                 if (jellyRunning) {
-                    btn.style.backgroundColor = "#e43e4f"; // red for stop
+                    btn.style.backgroundColor = "#e43e4f";
                     label.textContent = "Stop";
                 } else {
-                    btn.style.backgroundColor = "#17b84f"; // green for start
+                    btn.style.backgroundColor = "#17b84f";
                     label.textContent = "Start";
                 }
             });
         }
+        updateServiceStatus();
+        setInterval(updateServiceStatus, 5000);
 
+        // ===== Start/Stop Jellyseerr =====
         function toggleJellyseerr() {
             const pw = prompt("Enter password for Jellyseerr:");
             if (!pw) return;
-        
+
             fetch('/service-status')
                 .then(r => r.json())
                 .then(status => {
                     const running = status["jellyseerr"];
                     const url = running ? "/jellyseerr-stop" : "/jellyseerr-start";
-        
+
                     fetch(url, {
                         method: 'POST',
                         headers: {'Content-Type':'application/json'},
@@ -386,10 +333,7 @@
                 });
         }
 
-        updateServiceStatus();
-        setInterval(updateServiceStatus, 5000);
-
-        // Start/Stop/Shutdown functions
+        // ===== Generic Shutdown Function =====
         function triggerAction(url, msg) {
             actionText.textContent = msg;
             fetch(url, {method:'POST'})
@@ -397,7 +341,6 @@
                 .then(d => { actionText.textContent = d; })
                 .catch(e => { actionText.textContent = 'Error: ' + e; });
         }
-
         function shutdown() {
             const pw = prompt("Enter password to shut down this PC:");
             if (!pw) return;
