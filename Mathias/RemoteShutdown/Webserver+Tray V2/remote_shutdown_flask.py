@@ -236,7 +236,7 @@ def index():
 # ===== Load WEBP images =====
 @app.route("/img/<filename>")
 def serve_img(filename):
-    path = os.path.join(app.root_path, "static/img")
+    path = os.path.join(app.root_path, "static/img/webp")
     response = make_response(send_from_directory(path, filename))
 
     response.headers["Cache-Control"] = "public, max-age=604800" # 604800 sec = 1 Week
