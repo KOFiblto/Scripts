@@ -13,13 +13,10 @@ from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 import faulthandler
 
 
-
-
 # =========================================
 # =========== F U N C T I O N S ===========
 # =========================================
 
-# ===== Determine Local IP =====
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -31,11 +28,9 @@ def get_local_ip():
         s.close()
     return ip
 
-# ===== Convert Relative Path to Absolute Path =====
 def abs_path(relative_path: str) -> str:
     return os.path.join(BASE_DIR, relative_path)
 
-# ===== Load QIcon from File =====
 def load_icon(path: str, size: int = None) -> QIcon:
     full = abs_path(path)
     if not os.path.exists(full):
@@ -46,7 +41,6 @@ def load_icon(path: str, size: int = None) -> QIcon:
         icon = QIcon(pixmap)
     return icon
 
-# ===== Check if Local Port is Open =====
 def is_port_open(port: int) -> bool:
     sock = socket.socket()
     sock.settimeout(0.15)
@@ -59,23 +53,17 @@ def is_port_open(port: int) -> bool:
         sock.close()
 
 
-
-
 # =========================================
 # =========== V A R I A B L E S ===========
 # =========================================
 
-# ===== Paths & Scaling =====
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JELLYSEER_DIR = r"D:\Scripts\Mathias\Jellyseerr"
-SCALE = 1.0
 os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
 os.environ["QT_SCALE_FACTOR"] = "1.5"
 
-# ===== Local Server Info =====
 SERVER_IP = get_local_ip()
 
-# ===== Port Mapping for Services =====
 PORT_MAPPING = {
     "sonarr": 8989,
     "radarr": 7878,
@@ -87,16 +75,15 @@ PORT_MAPPING = {
     "jellyseerr": 5055
 }
 
-# ===== Service Status Cache (Threading) =====
 status_cache = {}
 status_lock = threading.Lock()
+ICON_SIZE = 32  # using pre-scaled 32px icons
 
 
 # =========================================
 # ============ T R A Y   A P P ============
 # =========================================
 
-# ===== Status Updater Thread =====
 class StatusUpdater(QObject):
     status_updated = Signal(dict)
 
@@ -110,31 +97,29 @@ class StatusUpdater(QObject):
             time.sleep(1)
 
 
-# ===== Main Tray Application =====
 class TrayApp(QObject):
     def __init__(self):
         super().__init__()
-        self.ICON_SIZE = int(20 * SCALE)
-        
-        # ===== System Tray Setup =====
+
+        # System Tray
         self.tray = QSystemTrayIcon()
         self.tray.setToolTip("Remote Shutdown / Services")
-        self.tray.setIcon(load_icon("static/img/tray_icon.png", self.ICON_SIZE))
+        self.tray.setIcon(load_icon("static/img/32px/tray_icon_32px.png", ICON_SIZE))
         self.tray.activated.connect(self.on_tray_activated)
 
-        # ===== Context Menu Setup =====
+        # Menu
         self.menu = QMenu()
         font = self.menu.font()
-        font.setPointSize(int(font.pointSize() * SCALE))
+        font.setPointSize(font.pointSize())
         self.menu.setFont(font)
         self.tray.setContextMenu(self.menu)
 
-        # ===== Status Updater =====
+        # Status Updater
         self.status_updater = StatusUpdater()
         self.status_updater.status_updated.connect(self.on_status_update)
         threading.Thread(target=self.status_updater.start_loop, daemon=True).start()
 
-        # ===== Timer to Refresh UI =====
+        # Timer
         self.timer = QTimer()
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.refresh_ui)
@@ -144,7 +129,7 @@ class TrayApp(QObject):
         self.tray.show()
 
 
-    # ===== Build Service Menu =====
+    # Services
     def build_services_menu(self, menu: QMenu):
         with status_lock:
             snapshot = dict(status_cache)
@@ -153,23 +138,22 @@ class TrayApp(QObject):
             running = snapshot.get(name, False)
             status_emoji = "🟢" if running else "🔴"
             label = f"{status_emoji} {name.capitalize()}"
-
-            act = QAction(load_icon(f"static/img/{name}.png", self.ICON_SIZE), label, menu)
+            act = QAction(load_icon(f"static/img/32px/{name}_32px.png", ICON_SIZE), label, menu)
             act.triggered.connect(lambda checked=False, p=port: webbrowser.open(f"http://localhost:{p}"))
             menu.addAction(act)
 
 
-    # ===== Build Jellyseerr Controls =====
+    # Jellyseerr Controls
     def build_jellyseerr_controls(self, menu: QMenu):
         with status_lock:
             snapshot = dict(status_cache)
 
         running = snapshot.get("jellyseerr", False)
         status_emoji = "⏹️" if running else "▶️"
-        status_Text = "Stop" if running else "Start"
-        label = f"{status_emoji} {status_Text} Jellyseerr"
+        status_text = "Stop" if running else "Start"
+        label = f"{status_emoji} {status_text} Jellyseerr"
 
-        act = QAction(load_icon("static/img/jellyseerr.png", self.ICON_SIZE), label, menu)
+        act = QAction(load_icon("static/img/32px/jellyseerr_32px.png", ICON_SIZE), label, menu)
         if running:
             act.triggered.connect(lambda: self.stop_jellyseerr())
         else:
@@ -178,14 +162,12 @@ class TrayApp(QObject):
         menu.addAction(act)
 
 
-    # ===== Build System Controls =====
+    # System Controls
     def build_system_controls(self, menu: QMenu):
         menu.addSeparator()
         
-        # Shutdown submenu
         shutdown_menu = QMenu("Shutdown PC", menu)
-        shutdown_menu.setIcon(load_icon("static/img/shutdown_white.png"))
-        
+        shutdown_menu.setIcon(load_icon("static/img/32px/shutdown_white_32px.png"))
         confirm_act = QAction("✅ Yes, Shutdown Now", shutdown_menu)
         cancel_act = QAction("❌ No, Cancel", shutdown_menu)
         confirm_act.triggered.connect(self.execute_shutdown)
@@ -193,17 +175,15 @@ class TrayApp(QObject):
         shutdown_menu.addAction(confirm_act)
         shutdown_menu.addAction(cancel_act)
         
-        shutdown_action = QAction(load_icon("static/img/shutdown_white.png"), "Shutdown PC", menu)
+        shutdown_action = QAction(load_icon("static/img/32px/shutdown_white_32px.png"), "Shutdown PC", menu)
         shutdown_action.setMenu(shutdown_menu)
         menu.addAction(shutdown_action)
         
-        # Quit
-        quit_act = QAction(load_icon("static/img/quit_white.png"), "Quit", menu)
+        quit_act = QAction(load_icon("static/img/32px/quit_white_32px.png"), "Quit", menu)
         quit_act.triggered.connect(self.quit_app)
         menu.addAction(quit_act)
 
 
-    # ===== Rebuild Menu =====
     def rebuild_menu(self):
         self.menu.clear()
         self.build_services_menu(self.menu)
@@ -211,42 +191,31 @@ class TrayApp(QObject):
         self.build_system_controls(self.menu)
 
 
-    # ===== Tray Activation =====
     def on_tray_activated(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             webbrowser.open("http://localhost:5000")
 
 
-    # ===== Jellyseerr Actions =====
     def start_jellyseerr(self):
         vbs = os.path.join(JELLYSEER_DIR, "start_jellyseerr.vbs")
         os.system(f'start "" wscript "{vbs}"')
-
 
     def stop_jellyseerr(self):
         vbs = os.path.join(JELLYSEER_DIR, "stop_jellyseerr.vbs")
         os.system(f'start "" wscript "{vbs}"')
 
-
-    # ===== Shutdown PC =====
     def execute_shutdown(self):
         os.system("shutdown /s /f /t 1")
 
-
-    # ===== Quit App =====
     def quit_app(self):
         QApplication.quit()
 
-
-    # ===== Status Update Handler =====
     def on_status_update(self, new_status):
         with status_lock:
             global status_cache
             status_cache = new_status
         self.refresh_ui()
 
-
-    # ===== Refresh UI =====
     def refresh_ui(self):
         menu = self.tray.contextMenu()
         if menu and menu.isVisible():
@@ -258,19 +227,17 @@ class TrayApp(QObject):
             snapshot = dict(status_cache)
 
         if snapshot and all(snapshot.values()):
-            self.tray.setIcon(load_icon("static/img/tray_icon_ok.png", self.ICON_SIZE) 
-                              if os.path.exists(abs_path("static/img/tray_icon_ok.png")) 
-                              else load_icon("static/img/tray_icon.png", self.ICON_SIZE))
+            self.tray.setIcon(load_icon("static/img/32px/tray_icon_ok_32px.png", ICON_SIZE) 
+                              if os.path.exists(abs_path("static/img/32px/tray_icon_ok_32px.png")) 
+                              else load_icon("static/img/32px/tray_icon_32px.png", ICON_SIZE))
             self.tray.setToolTip("All services running")
         else:
-            self.tray.setIcon(load_icon("static/img/tray_icon_warn.png", self.ICON_SIZE) 
-                              if os.path.exists(abs_path("static/img/tray_icon_warn.png")) 
-                              else load_icon("static/img/tray_icon.png", self.ICON_SIZE))
+            self.tray.setIcon(load_icon("static/img/32px/tray_icon_warn_32px.png", ICON_SIZE) 
+                              if os.path.exists(abs_path("static/img/32px/tray_icon_warn_32px.png")) 
+                              else load_icon("static/img/32px/tray_icon_32px.png", ICON_SIZE))
             down = [k for k, v in snapshot.items() if not v]
             hint = "Down: " + ", ".join(down) if down else "Checking..."
             self.tray.setToolTip(hint)
-
-
 
 
 # =========================================
@@ -283,9 +250,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     tray_app = TrayApp()
     sys.exit(app.exec())
-
-
-
 
 
 
