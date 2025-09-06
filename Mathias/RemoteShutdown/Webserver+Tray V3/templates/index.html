@@ -49,6 +49,7 @@
             cursor: pointer;
             transition: transform 0.2s, background-color 0.3s;
             text-decoration: none;
+            position: relative;
         }
         .tile img {
             width: 60px;
@@ -140,6 +141,37 @@
             gap: 1rem;
             margin-bottom: 0rem;
         }
+        /* ===== Control Buttons Inside Tiles ===== */
+        .control-btn {
+            position: absolute;
+            top: 8px;      /* small margin from top */
+            right: 8px;    /* small margin from right */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border: none;
+            border-radius: 8px;
+            background-color: transparent;
+            cursor: pointer;
+            font-size: 0;
+        }
+        
+        .control-btn img {
+            width: 35px;
+            height: 35px;
+            display: block;
+        }
+        
+
+        .control-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .control-btn:active {
+            transform: scale(0.98);
+        }
+
 
         /* ===== Responsive POCO X6 Pro ===== */
         @media (max-width: 600px) {
@@ -188,159 +220,90 @@
     <div class="grid">
         <!-- ===== Standard Service Tiles ===== -->
         <a class="tile" id="tile-sonarr" href="/sonarr">
+            <button class="control-btn" onclick="toggleService(event, 'sonarr')">
+                <img src="/img/play.webp" alt="Start Sonarr">
+            </button>
             <img src="/img/sonarr.webp" alt="Sonarr">
             <div class="tile-name">Sonarr</div>
             <div class="tile-desc" data-desc-de="Serien" data-desc-en="Series"></div>
         </a>
+
         <a class="tile" id="tile-radarr" href="/radarr">
+            <button class="control-btn" onclick="toggleService(event, 'radarr')">
+                <img src="/img/play.webp" alt="Start Radarr">
+            </button>
             <img src="/img/radarr.webp" alt="Radarr">
             <div class="tile-name">Radarr</div>
             <div class="tile-desc" data-desc-de="Filme" data-desc-en="Movies"></div>
         </a>
+
         <a class="tile" id="tile-bazarr" href="/bazarr">
+            <button class="control-btn" onclick="toggleService(event, 'bazarr')">
+                <img src="/img/play.webp" alt="Start Bazarr">
+            </button>
             <img src="/img/bazarr.webp" alt="Bazarr">
             <div class="tile-name">Bazarr</div>
             <div class="tile-desc" data-desc-de="Untertitel" data-desc-en="Subtitles"></div>
         </a>
+
         <a class="tile" id="tile-tdarr" href="/tdarr">
+            <button class="control-btn" onclick="toggleService(event, 'tdarr')">
+                <img src="/img/play.webp" alt="Start Tdarr">
+            </button>
             <img src="/img/tdarr.webp" alt="Tdarr">
             <div class="tile-name">Tdarr</div>
             <div class="tile-desc" data-desc-de="Transkodieren" data-desc-en="Re-encode"></div>
         </a>
+
         <a class="tile" id="tile-sabnzbd" href="/sabnzbd">
+            <button class="control-btn" onclick="toggleService(event, 'sabnzbd')">
+                <img src="/img/play.webp" alt="Start SABnzbd">
+            </button>
             <img src="/img/sabnzbd.webp" alt="SABnzbd">
             <div class="tile-name">SABnzbd</div>
             <div class="tile-desc" data-desc-de="Downloads" data-desc-en="Downloads"></div>
         </a>
+
         <a class="tile" id="tile-jellyfin" href="/jellyfin">
+            <button class="control-btn" onclick="toggleService(event, 'jellyfin')">
+                <img src="/img/play.webp" alt="Start Jellyfin">
+            </button>
             <img src="/img/jellyfin.webp" alt="Jellyfin">
             <div class="tile-name">Jellyfin</div>
             <div class="tile-desc" data-desc-de="Streamen" data-desc-en="Streaming"></div>
         </a>
+
         <a class="tile" id="tile-plex" href="/plex">
+            <button class="control-btn" onclick="toggleService(event, 'plex')">
+                <img src="/img/play.webp" alt="Start Plex">
+            </button>
             <img src="/img/plex.webp" alt="Plex">
             <div class="tile-name">Plex</div>
             <div class="tile-desc" data-desc-de="Streamen" data-desc-en="Streaming"></div>
         </a>
+
         <a class="tile" id="tile-jellyseerr" href="/jellyseerr">
+            <button class="control-btn" onclick="toggleService(event, 'jellyseerr')">
+                <img src="/img/play.webp" alt="Start Jellyseerr">
+            </button>
             <img src="/img/jellyseerr.webp" alt="Jellyseerr">
             <div class="tile-name">Jellyseerr</div>
             <div class="tile-desc" data-desc-de="Suchen" data-desc-en="Discover"></div>
         </a>
-    </div>
-
-    <div class="grid">
-               <!-- ===== Start Service Tiles (Blue) ===== -->
-        <a class="tile" style="background-color: #1e90ff;" href="javascript:void(0);" onclick="triggerService('sonarr','start')">
-            <img src="/img/play.webp" alt="Start Sonarr">
-            <div class="tile-name">Start Sonarr</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #1e90ff;" href="javascript:void(0);" onclick="triggerService('radarr','start')">
-            <img src="/img/play.webp" alt="Start Radarr">
-            <div class="tile-name">Start Radarr</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #1e90ff;" href="javascript:void(0);" onclick="triggerService('bazarr','start')">
-            <img src="/img/play.webp" alt="Start Bazarr">
-            <div class="tile-name">Start Bazarr</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #1e90ff;" href="javascript:void(0);" onclick="triggerService('tdarr','start')">
-            <img src="/img/play.webp" alt="Start Tdarr">
-            <div class="tile-name">Start Tdarr</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #1e90ff;" href="javascript:void(0);" onclick="triggerService('sabnzbd','start')">
-            <img src="/img/play.webp" alt="Start SABnzbd">
-            <div class="tile-name">Start SABnzbd</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #1e90ff;" href="javascript:void(0);" onclick="triggerService('jellyfin','start')">
-            <img src="/img/play.webp" alt="Start Jellyfin">
-            <div class="tile-name">Start Jellyfin</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #1e90ff;" href="javascript:void(0);" onclick="triggerService('plex','start')">
-            <img src="/img/play.webp" alt="Start Plex">
-            <div class="tile-name">Start Plex</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #1e90ff;" href="javascript:void(0);" onclick="triggerService('jellyseerr','start')">
-            <img src="/img/play.webp" alt="Start Jellyseerr">
-            <div class="tile-name">Start Jellyseerr</div>
-            <div class="tile-desc"></div>
-        </a>
-    
-        <!-- ===== Stop Service Tiles (Purple) ===== -->
-        <a class="tile" style="background-color: #800080;" href="javascript:void(0);" onclick="triggerService('sonarr','stop')">
-            <img src="/img/pause.webp" alt="Stop Sonarr">
-            <div class="tile-name">Stop Sonarr</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #800080;" href="javascript:void(0);" onclick="triggerService('radarr','stop')">
-            <img src="/img/pause.webp" alt="Stop Radarr">
-            <div class="tile-name">Stop Radarr</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #800080;" href="javascript:void(0);" onclick="triggerService('bazarr','stop')">
-            <img src="/img/pause.webp" alt="Stop Bazarr">
-            <div class="tile-name">Stop Bazarr</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #800080;" href="javascript:void(0);" onclick="triggerService('tdarr','stop')">
-            <img src="/img/pause.webp" alt="Stop Tdarr">
-            <div class="tile-name">Stop Tdarr</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #800080;" href="javascript:void(0);" onclick="triggerService('sabnzbd','stop')">
-            <img src="/img/pause.webp" alt="Stop SABnzbd">
-            <div class="tile-name">Stop SABnzbd</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #800080;" href="javascript:void(0);" onclick="triggerService('jellyfin','stop')">
-            <img src="/img/pause.webp" alt="Stop Jellyfin">
-            <div class="tile-name">Stop Jellyfin</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #800080;" href="javascript:void(0);" onclick="triggerService('plex','stop')">
-            <img src="/img/pause.webp" alt="Stop Plex">
-            <div class="tile-name">Stop Plex</div>
-            <div class="tile-desc"></div>
-        </a>
-        <a class="tile" style="background-color: #800080;" href="javascript:void(0);" onclick="triggerService('jellyseerr','stop')">
-            <img src="/img/pause.webp" alt="Stop Jellyseerr">
-            <div class="tile-name">Stop Jellyseerr</div>
-            <div class="tile-desc"></div>
-        </a>
-    
         <!-- ===== Shutdown Button (Red) ===== -->
         <a class="tile" style="background-color: #e43e4f;" href="javascript:void(0);" onclick="shutdown()">
             <img src="/img/shutdown.webp" alt="Shutdown">
             <div class="tile-name">Shutdown</div>
             <div class="tile-desc"></div>
         </a>
+
+        
     </div>
     
     <script>
         /* ========================================= */
         /* ========= J A V A   S C R I P T ========= */
         /* ========================================= */
-
-        // ===== Elements & Variables =====
-        function triggerService(service, action) {
-            const pw = prompt(`Enter password to ${action} ${service}:`);
-            if (!pw) return;
-        
-            fetch(`/${action}/${service}`, {
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({password: pw})
-            })
-            .then(r => r.text())
-            .then(d => actionText.textContent = d)
-            .catch(e => actionText.textContent = "Error: " + e);
-        }
 
 
         const actionText = document.getElementById("action-status");
@@ -390,28 +353,41 @@
         // ===== Fetch Service Status & Update Tiles =====
         function updateServiceStatus() {
             fetch('/service-status')
-            .then(response => response.json())
-            .then(data => {
-                for (const [service, running] of Object.entries(data)) {
-                    const tile = document.getElementById(`tile-${service}`);
-                    if (tile) tile.style.backgroundColor = running ? '#28a745' : '#dc3545';
-                }
-            });
+                .then(response => response.json())
+                .then(data => {
+                    for (const [service, running] of Object.entries(data)) {
+                        const tile = document.getElementById(`tile-${service}`);
+                        if (!tile) continue;
+        
+                        tile.style.backgroundColor = running ? '#28a745' : '#dc3545';
+        
+                        const btnImg = tile.querySelector(".control-btn img");
+                        if (btnImg) {
+                            btnImg.src = running ? "/img/pause.webp" : "/img/play.webp";
+                        }
+                    }
+                });
         }
+        
         updateServiceStatus();
         setInterval(updateServiceStatus, 500);
 
-        // ===== Start/Stop Jellyseerr =====
-        function toggleJellyseerr() {
-            const pw = prompt("Enter password for Jellyseerr:");
-            if (!pw) return;
 
+        function toggleService(event, service) {
+            event.stopPropagation();
+            event.preventDefault();
+        
+            const pw = prompt(`Enter password for ${service}:`);
+            if (!pw) return;
+        
+            // Fetch current status
             fetch('/service-status')
                 .then(r => r.json())
                 .then(status => {
-                    const running = status["jellyseerr"];
-                    const url = running ? "/jellyseerr-stop" : "/jellyseerr-start";
-
+                    const running = status[service];
+                    // Use correct Flask routes
+                    const url = running ? `/stop/${service}` : `/start/${service}`;
+        
                     fetch(url, {
                         method: 'POST',
                         headers: {'Content-Type':'application/json'},
@@ -422,21 +398,23 @@
                     .catch(e => actionText.textContent = "Error: " + e);
                 });
         }
+        
 
-        // ===== Generic Shutdown Function =====
-        function triggerAction(url, msg) {
-            actionText.textContent = msg;
-            fetch(url, {method:'POST'})
-                .then(r => r.text())
-                .then(d => { actionText.textContent = d; })
-                .catch(e => { actionText.textContent = 'Error: ' + e; });
-        }
         function shutdown() {
             const pw = prompt("Enter password to shut down this PC:");
             if (!pw) return;
-            triggerAction('/shutdown', "Processing shutdown...");
+        
+            actionText.textContent = "Processing shutdown...";
+            fetch('/shutdown', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({password: pw})
+            })
+            .then(r => r.text())
+            .then(d => { actionText.textContent = d; })
+            .catch(e => { actionText.textContent = 'Error: ' + e; });
         }
-
+        
     </script>
 </body>
 </html>
