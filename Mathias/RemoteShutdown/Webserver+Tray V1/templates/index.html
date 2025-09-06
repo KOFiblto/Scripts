@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Server Control</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="image/png" href="{{ url_for('static', filename='img/RemoteShutdown.png') }}">
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			text-align: center;
+			background-color: #f4f4f4;
+			margin: 0;
+			padding: 0.1rem;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			min-height: 100vh;
+		}
+		h1 {
+			margin-bottom: 0.5rem;
+			font-size: 2rem;
+		}
+		/*------------ Mode Switch -----------*/
+		.switch-container {
+			display: inline-flex;
+			align-items: center;
+			background: #e0e0e0;
+			border-radius: 20px;
+			padding: 7px;
+			cursor: pointer;
+			user-select: none;
+			width: 90px;
+			position: relative;
+		}
+		  
+		.switch-option {
+			flex: 1;
+			text-align: center;
+			font-size: 0.9rem;
+			color: #555;
+			z-index: 1;
+			transition: color 0.3s;
+		}
+		.switch-option.left {
+			text-align: left;
+			padding-left: 5px;
+			padding-right: 5px;
+		}
+		
+		.switch-option.right {
+			text-align: right;
+			padding-right: 5px;
+			padding-left: 5px;
+		}
+		
+		.switch-handle {
+			position: absolute;
+			top: 2px;
+			left: 2px;
+			width: 48px;
+			height: 26px;
+			background: white;
+			border-radius: 20px;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+			transition: left 0.2s ease-in-out, 
+						width 0.2s ease-in-out,
+						background 0.2s ease-in-out;
+		}
+				
+		.switch-container:not(.on) .switch-handle {
+			left: 3px;
+			width: 52px;
+			background: #8dd9a8;
+		}
+		
+		.switch-container.on .switch-handle {
+			left: 61px;
+			width: 40px;
+			background: #66bfff; 
+		}
+					
+		.switch-container.on .switch-option.right {
+			color: black;
+		}
+		
+		.switch-container:not(.on) .switch-option.left {
+			color: black;
+		}
+
+
+		/*------------ Buttons -----------*/
+		.btn, .btn-row { box-sizing: border-box; }
+		.btn {
+			display: flex;
+			align-items: center;
+			justify-content: left; 
+    		position: relative;
+			width: min(90%, 600px);
+			margin: 0.3rem 0;
+			padding: 1rem;
+			font-size: 1.5rem;
+			min-height: 5vh;
+			max-height: 6vh;
+			text-decoration: none;
+			color: white;
+			background: #2ca5fc;
+			border-radius: 1rem;
+			transition: background 0.2s;
+			cursor: pointer;
+			font-weight: bold;
+		}
+		.btn img, .btn-half img {
+			max-height: 2.7rem;
+			width: auto;
+			margin-right: 0.8rem;
+			transform: scale(0.9);
+			transition: transform 0.2s;
+		}
+
+		.btn:hover { background: #007BFF; }
+		.btn-danger { background: #dc3545; }
+		.btn-danger:hover { background: #a71d2a; }
+		.btn-green { background: #28a745; }
+		.btn-green:hover { background: #1e7e34; }
+		.btn-red { background: #db4251; }
+		.btn-red:hover { background: #a71d2a; }
+		.btn-row {
+			display: flex;
+			justify-content: space-between;
+			width: min(90%, 600px);
+			margin: 0.3rem 0;
+			gap: 30px;
+		}
+		.btn-half { flex: 1; }
+		.desc {
+			color: lightgray;
+			font-size: 0.9em;
+			font-weight: normal;
+		}
+
+
+		/*------------ Status Dot -----------*/
+		.status-dot {
+			position: absolute;
+			right: 20px;
+			width: 20px;
+			height: 20px;
+			border-radius: 50%;
+			background-color: red;
+			top: 50%;
+			transform: translateY(-50%);
+			border: 0.5px solid black;
+		}
+		
+		.status-dot.online {
+			background-color: #28a745;
+		}
+		
+
+		/*-------------------------------------------------
+		  -------------- B I G    S C R E E N -------------
+		  -------------------------------------------------
+		Poco  :  406px width
+		Laptop: 1707px width
+		Screen: 2439px width
+		*/
+		
+		/* Handy */
+		@media (min-width: 400px) {
+			.btn img, .btn-half img {
+				transform: scale(0.9);
+			}
+		}
+		
+		/* Laptop */
+		@media (min-width: 1200px) {
+			.btn img, .btn-half img {
+				transform: scale(0.8);
+			}
+		}
+		
+		/* Arbeitszimmer Screen 4K */
+		@media (min-width: 2000px) {
+			.btn img, .btn-half img {
+				transform: scale(1.25);
+			}
+		}
+
+
+
+	</style>
+</head>
+<!----------------------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------------------->
+<body>
+	<h1>Mathias' Mediaserver</h1>
+
+	<!-- Toggle Button -->
+	<div id="toggleSwitch" class="switch-container">
+		<div class="switch-option left">Noob</div>
+		<div class="switch-option right">Pro</div>
+		<div class="switch-handle"></div>
+	</div>
+
+	<!-- Text  -->
+	<div id="action-status" style="font-size: 1rem; color: #333; min-height: 1rem;"></div>
+
+	<!-- Sonarr -->
+	<a class="btn" href="/sonarr">
+		<img src="/img/sonarr.webp" alt="Sonarr">
+		<span class="btn-text" data-desc="Serien">
+			<span class="btn-label">Sonarr</span>
+			<span class="status-dot" id="status-sonarr"></span>
+		</span>
+	</a>
+	
+	<!-- Radarr -->
+	<a class="btn" href="/radarr">
+		<img src="/img/radarr.webp" alt="Radarr">
+		<span class="btn-text" data-desc="Filme">
+			<span class="btn-label">Radarr</span>
+			<span class="status-dot" id="status-radarr"></span>
+		</span>
+	</a>
+	
+	<!-- Bazarr -->
+	<a class="btn" href="/bazarr">
+		<img src="/img/bazarr.webp" alt="Bazarr">
+		<span class="btn-text" data-desc="Untertitel">
+			<span class="btn-label">Bazarr</span>
+			<span class="status-dot" id="status-bazarr"></span>
+		</span>
+	</a>
+	
+	<!-- Tdarr -->
+	<a class="btn" href="/tdarr">
+		<img src="/img/tdarr.webp" alt="Tdarr">
+		<span class="btn-text" data-desc="Optimizing">
+			<span class="btn-label">Tdarr</span>
+			<span class="status-dot" id="status-tdarr"></span>
+		</span>
+	</a>
+	
+	<!-- SABnzbd -->
+	<a class="btn" href="/sabnzbd">
+		<img src="/img/sabnzbd.webp" alt="SABnzbd">
+		<span class="btn-text" data-desc="Downloads">
+			<span class="btn-label">SABnzbd</span>
+			<span class="status-dot" id="status-sabnzbd"></span>
+		</span>
+	</a>
+	
+	<!-- Jellyfin -->
+	<a class="btn" href="/jellyfin">
+		<img src="/img/jellyfin.webp" alt="Jellyfin">
+		<span class="btn-text" data-desc="Media Server 1">
+			<span class="btn-label">Jellyfin</span>
+			<span class="status-dot" id="status-jellyfin"></span>
+		</span>
+	</a>
+	
+	<!-- Plex -->
+	<a class="btn" href="/plex">
+		<img src="/img/plex.webp" alt="Plex">
+		<span class="btn-text" data-desc="Media Server 2">
+			<span class="btn-label">Plex</span>
+			<span class="status-dot" id="status-plex"></span>
+		</span>
+	</a>
+	
+	<!-- Jellyseerr -->
+	<a class="btn" href="/jellyseerr">
+		<img src="/img/jellyseerr.webp" alt="Jellyseerr">
+		<span class="btn-text" data-desc="Filme finden">
+			<span class="btn-label">Jellyseerr</span>
+			<span class="status-dot" id="status-jellyseerr"></span>
+		</span>
+	</a>
+	
+	<!-- Start/Stop Jellyseerr -->
+	<div class="btn-row">
+		<a class="btn btn-half btn-green" href="javascript:void(0);" onclick="jellyseerr_start()">
+			<img src="/img/jellyseerr.webp" alt="Start Jellyseerr">
+			<span class="btn-text">Start</span>
+		</a>
+		<a class="btn btn-half btn-red" href="javascript:void(0);" onclick="jellyseerr_stop()">
+			<img src="/img/jellyseerr.webp" alt="Stop Jellyseerr">
+			<span class="btn-text">Stop</span>
+		</a>
+	</div>
+	
+	<!-- Shutdown -->
+	<a class="btn btn-danger" href="javascript:void(0);" onclick="shutdown()">
+		<img src="/img/shutdown.webp" alt="Shutdown">
+		<span class="btn-text">Shutdown</span>
+	</a>
+	
+
+
+
+
+<!----------------------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------------------->
+
+	<script>
+		const toggleBtn = document.getElementById("toggleDescriptions");
+		const btnLabels = document.querySelectorAll(".btn-label");
+		const textBox = document.getElementById("action-status");
+		const toggleSwitch = document.getElementById("toggleSwitch");
+		let showDescriptions = true;
+		toggleSwitch.classList.add("on");
+ 
+		/////////////////////////////////////////
+		////// Noob/Pro Mode
+		//Save Default name (Sonarr/Radarr)	
+		btnLabels.forEach(el => {
+			el.dataset.baseText = el.textContent;
+		});
+		// Swap Names
+		toggleSwitch.addEventListener("click", () => {
+			showDescriptions = !showDescriptions;
+			toggleSwitch.classList.toggle("on", showDescriptions);
+		
+			btnLabels.forEach(el => {
+				const desc = el.parentElement.dataset.desc;
+				if (desc) {
+					if (!showDescriptions) {
+						el.innerHTML = `${el.dataset.baseText} <span class="desc">(${desc})</span>`;
+					} else {
+						el.textContent = el.dataset.baseText;
+					}
+				}
+			});
+		});
+
+		/////////////////////////////////////////+
+		///// Start / Stop Process
+		function triggerAction(url) {
+			textBox.textContent = "Processing...";
+			fetch(url)
+				.then(response => response.text())
+				.then(data => {
+					textBox.textContent = data;
+				})
+				.catch(err => {
+					textBox.textContent = "Error: " + err;
+				});
+		}
+
+		/////////////////////////////////////////
+		////// Shutdown Prompt
+		function shutdown() {
+			const password = prompt("Enter password to shut down this PC:");
+			if (!password) return;
+		
+			textBox.textContent = "Processing shutdown...";
+		
+			fetch('/shutdown', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ password })
+			})
+			.then(response => response.text())
+			.then(data => {
+				textBox.textContent = data;
+			})
+			.catch(err => {
+				textBox.textContent = "Error: " + err;
+			});
+		}
+
+		/////////////////////////////////////////
+		////// Start Jellyseerr
+		function jellyseerr_start() {
+			const password = prompt("Enter password to start Jellyseerr:");
+			if (!password) return;
+		
+			textBox.textContent = "Processing start of Jellyseerr...";
+		
+			fetch('/jellyseerr-start', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ password })
+			})
+			.then(response => response.text())
+			.then(data => {
+				textBox.textContent = data;
+			})
+			.catch(err => {
+				textBox.textContent = "Error: " + err;
+			});
+		}
+
+		/////////////////////////////////////////
+		////// Stop Jellyseerr
+		function jellyseerr_stop() {
+			const password = prompt("Enter password to stop Jellyseerr:");
+			if (!password) return;
+		
+			textBox.textContent = "Processing stop of Jellyseerr...";
+		
+			fetch('/jellyseerr-stop', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ password })
+			})
+			.then(response => response.text())
+			.then(data => {
+				textBox.textContent = data;
+			})
+			.catch(err => {
+				textBox.textContent = "Error: " + err;
+			});
+		}
+
+
+		/////////////////////////////////////////
+		///// Status Dot next to Service
+		function updateServiceStatus() {
+			fetch('/service-status')
+				.then(response => response.json())
+				.then(data => {
+					for (const [service, running] of Object.entries(data)) {
+						const dot = document.getElementById(`status-${service}`);
+						if (dot) {
+							dot.classList.toggle("online", running);
+						}
+					}
+				});
+		}
+		
+		// Run once on load + every 10s
+		updateServiceStatus();
+		setInterval(updateServiceStatus, 500);
+		
+
+		
+	</script>
+</body>
+</html>
