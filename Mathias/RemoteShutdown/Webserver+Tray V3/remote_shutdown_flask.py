@@ -1,13 +1,13 @@
 import logging
 import mimetypes
 import os
-import psutil
+import psutil # type: ignore
 import socket
 import hashlib
 from threading import Thread
 import time
 import subprocess
-from flask import Flask, render_template_string, redirect, request, render_template, send_from_directory, make_response, jsonify
+from flask import Flask, render_template_string, redirect, request, render_template, send_from_directory, make_response, jsonify # type: ignore
 
 
 
@@ -44,6 +44,9 @@ def get_local_ip():
     finally:
         s.close()
     return ip
+
+def is_local_request():
+    return request.remote_addr in ("127.0.0.1", "::1", "localhost", get_local_ip())
 
 
 # ===== Check if Service is listening on Port (Running/Not running) =====
@@ -253,36 +256,29 @@ def universal_router(service):
 
 @app.route("/start/<service>", methods=["POST"])
 def start(service):
-    data = request.get_json()
-    if not data or 'password' not in data:
-        return "No password provided!", 400
-    if not check_password(data['password']):
-        return "Incorrect password!", 403
+    if not is_local_request():
+        data = request.get_json()
+        if not data or 'password' not in data or not check_password(data['password']):
+            return "Unauthorized: invalid password", 403
     return start_service(service)
 
-
+# ===== Stop service =====
 @app.route("/stop/<service>", methods=["POST"])
 def stop(service):
-    data = request.get_json()
-    if not data or 'password' not in data:
-        return "No password provided!", 400
-    if not check_password(data['password']):
-        return "Incorrect password!", 403
+    if not is_local_request():
+        data = request.get_json()
+        if not data or 'password' not in data or not check_password(data['password']):
+            return "Unauthorized: invalid password", 403
     return stop_service(service)
 
-
-# ===== Shutdown PC =====
+# ===== Shutdown =====
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
-    data = request.get_json()
-    if not data or 'password' not in data:
-        return "No password provided!", 400
-
-    password = data['password']
-    if not check_password(password):
-        return "Incorrect password! Shutdown aborted.", 403
-   
-    os.system("shutdown /s /f /t 0")
+    if not is_local_request():
+        data = request.get_json()
+        if not data or 'password' not in data or not check_password(data['password']):
+            return "Unauthorized: invalid password", 403
+    # os.system("shutdown /s /f /t 0")  # uncomment when ready
     return "Shutting down..."
 
 
@@ -290,6 +286,19 @@ def shutdown():
 @app.route("/service-status")
 def service_status():
     return jsonify(status_cache)
+
+
+@app.route("/verify-password", methods=["POST"])
+def verify_password():
+    if is_local_request():
+        return "OK", 200
+    else:
+        data = request.get_json()
+        if not data or 'password' not in data:
+            return "No password provided!", 400
+        if not check_password(data['password']):
+            return "Incorrect password", 403
+        return "OK", 200
 
 
 # ===== Home =====
