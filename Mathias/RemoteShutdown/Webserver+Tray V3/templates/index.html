@@ -18,14 +18,102 @@
             padding: 0.1rem;
         }
         h1 {
-            margin: 1rem 0;
+            margin: 0.5rem 0;
             font-size: 2rem;
+        }
+
+        /* ===== Toggle Switch ===== */
+        .switch-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center; 
+            background: #e0e0e0;
+            border-radius: 20px;
+            padding: 7px;
+            cursor: pointer;
+            user-select: none;
+            width: 100px;
+            position: relative;
+            margin-bottom: 1rem;
+            gap: 10px;
+        }
+        .switch-option {
+            flex: 1;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #555;
+            z-index: 1;
+            transition: color 0.3s;
+        }
+        .switch-option img {
+            height: 1.05rem;
+            width: auto;
+            display: block;
+            margin: auto;
+        }
+        .switch-handle {
+            position: absolute;
+            top: 2px;
+            left: 200px;
+            width: 48px;
+            height: 26px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: left 0.2s ease-in-out, width 0.2s ease-in-out, background 0.2s ease-in-out;
+        }
+        
+        
+        /* ===== Noob / Pro Toggle ===== */
+        .toggle-noobpro:not(.on) .switch-handle { 
+            left: 3px; 
+            width: 55px; /* Noob */
+            background: #8dd9a8;
+        }
+        .toggle-noobpro.on .switch-handle { 
+            left: 63px; 
+            width: 49px; /* Pro */
+            background: #66bfff; 
+        }
+
+        /* ===== Language Toggle ===== */
+        .toggle-lang:not(.on) .switch-handle { 
+            left: 3px; 
+            width: 55px; /* German flag */
+            background: #8dd9a8;
+        }
+        .toggle-lang.on .switch-handle { 
+            left: 57px; 
+            width: 55px; /* English flag */
+            background: #66bfff; 
+        }
+
+        /* ===== Admin Toggle ===== */
+        .toggle-admin:not(.on) .switch-handle { 
+            left: 3px; 
+            width: 55px; /* User */
+            background: #8dd9a8;
+        }
+        .toggle-admin.on .switch-handle { 
+            left: 57px; 
+            width: 55px; /* Admin */
+            background: #66bfff; 
+        }
+
+
+        /* ===== Toggle Row Container ===== */
+        .toggle-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0rem;
         }
 
         /* ===== Grid Container (Tiles) ===== */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 0.8rem 1.3rem;
             justify-content: center;
             padding: 1rem;
@@ -78,74 +166,11 @@
         }
         .pro .tile-desc { visibility: visible; }
 
-        /* ===== Toggle Switch ===== */
-        .switch-container {
-            display: inline-flex;
-            align-items: center;
-            justify-content: space-between; 
-            background: #e0e0e0;
-            border-radius: 20px;
-            padding: 7px;
-            cursor: pointer;
-            user-select: none;
-            width: 110px;
-            position: relative;
-            margin-bottom: 1rem;
-            gap: 20px;
-        }
-        .switch-option {
-            flex: 1;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #555;
-            z-index: 1;
-            transition: color 0.3s;
-        }
-        .switch-option img {
-            height: 1.05rem;
-            width: auto;
-            display: block;
-            margin: auto;
-        }
-        .switch-handle {
-            position: absolute;
-            top: 2px;
-            left: 200px;
-            width: 48px;
-            height: 26px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: left 0.2s ease-in-out, width 0.2s ease-in-out, background 0.2s ease-in-out;
-        }
-        .switch-container:not(.on) .switch-handle {
-            left: 3px;
-            width: 60px;
-            background: #8dd9a8;
-        }
-        .switch-container.on .switch-handle {
-            left: 73px;
-            width: 49px;
-            background: #66bfff;
-        }
-        .switch-option.left { max-width: calc(90px * 4/7); }
-        .switch-option.right { max-width: calc(90px * 3/7); }
-        .switch-container.on .switch-option.right { color: black; }
-        .switch-container:not(.on) .switch-option.left { color: black; }
-
-        /* ===== Toggle Row Container ===== */
-        .toggle-row {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 0rem;
-        }
         /* ===== Control Buttons Inside Tiles ===== */
         .control-btn {
             position: absolute;
-            top: 8px;      /* small margin from top */
-            right: 8px;    /* small margin from right */
+            top: 8px;     
+            right: 8px;    
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -173,6 +198,7 @@
         }
 
 
+
         /* ===== Responsive POCO X6 Pro ===== */
         @media (max-width: 600px) {
             .grid {
@@ -180,11 +206,29 @@
                 margin-left: -15px;
                 gap: 10px 25px;
             }
-            .tile { font-size: 1.2rem; padding: 0.8rem; }
-            .tile img { width: 45px; height: 45px; }
-            h1 { margin: 0.3rem; font-size: 2rem; }
-            .switch-container { margin-bottom: 0.3rem; }
-            .tile-desc { font-size: 1rem; }
+            .tile {             
+                font-size: 1.2rem; 
+                padding: 0.8rem;     
+            }
+            .tile img {         
+                width: 45px; 
+                height: 45px; 
+                     
+            }
+            h1 {                
+                margin: 0.3rem; 
+                font-size: 2rem;    
+            }
+            .switch-container { 
+                margin-bottom: 0.3rem;  
+            }
+            .tile-desc {        
+                font-size: 1rem;    
+            }
+            .control-btn img {
+                width: 1.7rem;
+                height: 1.7rem;
+            }
         }
     </style>
 </head>
@@ -200,18 +244,27 @@
     <!-- ===== Toggle Switches ===== -->
     <div class="toggle-row">
         <!-- Noob / Pro Toggle -->
-        <div id="toggleSwitch" class="switch-container">
+        <div id="toggleSwitch" class="switch-container toggle-noobpro on">
             <div class="switch-option left">Noob</div>
-            <div class="switch-option right">Pro</div>
+            <div class="switch-option right">&nbsp;&nbsp;Pro</div>
             <div class="switch-handle"></div>
         </div>
+
         <!-- Language Toggle -->
-        <div id="langToggle" class="switch-container on">
-            <div class="switch-option left"> <img src="/img/german.webp"  width="25px"></div>
+        <div id="langToggle" class="switch-container toggle-lang">
+            <div class="switch-option left"><img src="/img/german.webp" width="25px"></div>
             <div class="switch-option right"><img src="/img/english.webp" width="25px"></div>
             <div class="switch-handle"></div>
         </div>
+
+        <!-- Admin Toggle -->
+        <div id="adminToggle" class="switch-container toggle-admin">
+            <div class="switch-option left">User</div>
+            <div class="switch-option right">Admin</div>
+            <div class="switch-handle"></div>
+        </div>
     </div>
+
 
     <!-- ===== Status / Action Text ===== -->
     <div id="action-status"></div>
@@ -306,49 +359,92 @@
         /* ========================================= */
 
 
-        const actionText = document.getElementById("action-status");
-        const langToggle = document.getElementById("langToggle");
-        const toggleSwitch = document.getElementById("toggleSwitch");
+        let authenticated = false;
+        let noobMode = false;
+        let lang = "de";
+        let adminPassword = null;
+        
+        const toggleSwitch = document.getElementById("toggleSwitch");   
+        const langToggle = document.getElementById("langToggle");       
+        const adminToggle = document.getElementById("adminToggle");     
         const tiles = document.querySelectorAll(".tile");
+        const actionText = document.getElementById("action-status");
+        
 
-        let noobMode = false; 
-        let lang = "en";    
 
-        toggleSwitch.classList.add("on");
 
-        // ===== Update Tile Descriptions =====
-        function updateTileDescriptions() {
-            tiles.forEach(tile => {
-                const descDiv = tile.querySelector(".tile-desc");
-                if (descDiv) {
-                    if (noobMode) {
-                        descDiv.textContent = (lang === "en") ? descDiv.dataset.descEn : descDiv.dataset.descDe;
-                        descDiv.classList.add("visible");
-                    } else {
-                        descDiv.classList.remove("visible");
-                    }
-                }
-            });
-        }
-        updateTileDescriptions();
-
-        // ===== Toggle Noob/Pro Mode =====
+        // ===== Noob/Pro toggle =====
         toggleSwitch.addEventListener("click", () => {
             noobMode = !noobMode;
             toggleSwitch.classList.toggle("on", !noobMode);
             updateTileDescriptions();
         });
 
-        // ===== Toggle Language =====
+        
+        // ===== Language toggle =====
         langToggle.addEventListener("click", () => {
             lang = (lang === "de") ? "en" : "de";
             langToggle.classList.toggle("on", lang === "en");
-
-            tiles.forEach(tile => {
-                const desc = tile.querySelector(".tile-desc");
-                if(desc) desc.textContent = (lang === "en") ? desc.dataset.descEn : desc.dataset.descDe;
-            });
+            updateTileDescriptions();
         });
+
+
+        window.addEventListener("DOMContentLoaded", () => {
+            toggleSwitch.classList.toggle("on", !noobMode);
+            langToggle.classList.toggle("on", lang === "en");
+            adminToggle.classList.toggle("on", authenticated);
+            updateTileDescriptions();
+        });
+
+        
+        function updateTileDescriptions() {
+            tiles.forEach(tile => {
+                const descDiv = tile.querySelector(".tile-desc");
+                if (!descDiv) return;
+        
+                if (noobMode) {
+                    descDiv.textContent = (lang === "en") ? descDiv.dataset.descEn : descDiv.dataset.descDe;
+                    descDiv.classList.add("visible");
+                } else {
+                    descDiv.classList.remove("visible");
+                }
+            });
+        }
+        
+
+        // ===== Admin toggle =====
+        // Admin toggle
+        adminToggle.addEventListener("click", async () => {
+            const isAdmin = adminToggle.classList.contains("on");
+            if (!isAdmin) {
+                // First-time password entry
+                const pw = prompt("Enter password to unlock Admin actions:");
+                if (!pw) return;
+        
+                try {
+                    const res = await fetch('/verify-password', {
+                        method: 'POST',
+                        headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({password: pw})
+                    });
+                    const text = await res.text();
+                    if (text === "OK") {
+                        adminToggle.classList.add("on");
+                        adminPassword = pw;
+                    } else {
+                        alert("Incorrect password!");
+                    }
+                } catch (e) {
+                    alert("Error: " + e);
+                }
+            } else {
+                // Logout
+                adminToggle.classList.remove("on");
+                adminPassword = null;
+            }
+        });
+        
+
 
         // ===== Fetch Service Status & Update Tiles =====
         function updateServiceStatus() {
@@ -358,9 +454,9 @@
                     for (const [service, running] of Object.entries(data)) {
                         const tile = document.getElementById(`tile-${service}`);
                         if (!tile) continue;
-        
+
                         tile.style.backgroundColor = running ? '#28a745' : '#dc3545';
-        
+
                         const btnImg = tile.querySelector(".control-btn img");
                         if (btnImg) {
                             btnImg.src = running ? "/img/pause.webp" : "/img/play.webp";
@@ -368,30 +464,32 @@
                     }
                 });
         }
-        
+
+        // Run immediately, then every 500ms
         updateServiceStatus();
         setInterval(updateServiceStatus, 500);
 
-
+        // ===== Service buttons =====
         function toggleService(event, service) {
             event.stopPropagation();
             event.preventDefault();
         
-            const pw = prompt(`Enter password for ${service}:`);
-            if (!pw) return;
+            if (!adminPassword) {
+                alert("Switch to Admin and enter password first!");
+                return;
+            }
         
-            // Fetch current status
             fetch('/service-status')
                 .then(r => r.json())
                 .then(status => {
                     const running = status[service];
-                    // Use correct Flask routes
                     const url = running ? `/stop/${service}` : `/start/${service}`;
-        
+                    
+                    // Send password with request
                     fetch(url, {
                         method: 'POST',
                         headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify({password: pw})
+                        body: JSON.stringify({password: adminPassword})
                     })
                     .then(r => r.text())
                     .then(d => actionText.textContent = d)
@@ -399,22 +497,26 @@
                 });
         }
         
-
+        // ===== Shutdown =====
         function shutdown() {
-            const pw = prompt("Enter password to shut down this PC:");
-            if (!pw) return;
+            if (!adminPassword) {
+                alert("Switch to Admin and enter password first!");
+                return;
+            }
+        
+            if (!confirm("Are you sure you want to shutdown?")) return;
         
             actionText.textContent = "Processing shutdown...";
             fetch('/shutdown', {
                 method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({password: pw})
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({password: adminPassword})
             })
             .then(r => r.text())
             .then(d => { actionText.textContent = d; })
             .catch(e => { actionText.textContent = 'Error: ' + e; });
         }
-        
+           
     </script>
 </body>
 </html>
