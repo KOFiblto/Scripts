@@ -6,9 +6,9 @@ import threading
 import webbrowser
 import logging
 
-from PySide6.QtCore import QTimer, Qt, Signal, QObject
-from PySide6.QtGui import QIcon, QAction
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
+from PySide6.QtCore import QTimer, Qt, Signal, QObject # type: ignore
+from PySide6.QtGui import QIcon, QAction # type: ignore
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu # type: ignore
 
 import faulthandler
 
