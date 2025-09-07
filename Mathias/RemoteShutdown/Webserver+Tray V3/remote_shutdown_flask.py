@@ -80,11 +80,17 @@ def is_service_running(service):
 def update_status_cache():
     global status_cache
     while True:
-        status_cache = {
-            name: is_port_open(info["port"]) or is_service_running(name)
-            for name, info in SERVICES.items()
-        }
-        time.sleep(5)
+        new_status = {}
+        for name, info in SERVICES.items():
+            port_open = is_port_open(info["port"])
+            service_running = is_service_running(name)
+            if name == "plex": # Special for Plex, as it keeps the port open for some reason
+                new_status[name] = port_open and service_running
+            else:
+                new_status[name] = port_open or service_running
+        status_cache = new_status
+        time.sleep(1)
+
 
 
 # ===== Redirect to localhost or <Laptop IP> =====
@@ -198,11 +204,15 @@ SERVICES = {
         "port": 6767,
         "type": "service",
         "name": "Bazarr"
+        # CMD to give Access to User:
+        # sc sdset Bazarr "D:(A;;RPWP;;;BU)(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)S:(AU;FA;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;WD)"
     },
     "tdarr": {
         "port": 8265,
         "type": "service",
         "name": "TdarrServer"
+        # CMD to give Acces to User
+        # sc sdset TdarrServer "D:(A;;RPWP;;;BU)(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)S:(AU;FA;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;WD)"
     },
     "jellyseerr": {
         "port": 5055,
@@ -254,6 +264,7 @@ def universal_router(service):
     return f"Service '{service}' not found", 404
 
 
+# ===== Start Service =====
 @app.route("/start/<service>", methods=["POST"])
 def start(service):
     if not is_local_request():
@@ -261,6 +272,7 @@ def start(service):
         if not data or 'password' not in data or not check_password(data['password']):
             return "Unauthorized: invalid password", 403
     return start_service(service)
+
 
 # ===== Stop service =====
 @app.route("/stop/<service>", methods=["POST"])
@@ -271,6 +283,7 @@ def stop(service):
             return "Unauthorized: invalid password", 403
     return stop_service(service)
 
+
 # ===== Shutdown =====
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
@@ -278,7 +291,7 @@ def shutdown():
         data = request.get_json()
         if not data or 'password' not in data or not check_password(data['password']):
             return "Unauthorized: invalid password", 403
-    # os.system("shutdown /s /f /t 0")  # uncomment when ready
+    os.system("shutdown /s /f /t 0")  # uncomment when ready
     return "Shutting down..."
 
 
