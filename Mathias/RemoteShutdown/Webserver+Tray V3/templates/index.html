@@ -357,20 +357,17 @@
         /* ========================================= */
         /* ========= J A V A   S C R I P T ========= */
         /* ========================================= */
+/* ========================================= */
 
-
-        let authenticated = false;
         let noobMode = false;
         let lang = "de";
         let adminPassword = null;
-        
+
         const toggleSwitch = document.getElementById("toggleSwitch");   
         const langToggle = document.getElementById("langToggle");       
         const adminToggle = document.getElementById("adminToggle");     
         const tiles = document.querySelectorAll(".tile");
         const actionText = document.getElementById("action-status");
-        
-
 
 
         // ===== Noob/Pro toggle =====
@@ -380,7 +377,7 @@
             updateTileDescriptions();
         });
 
-        
+
         // ===== Language toggle =====
         langToggle.addEventListener("click", () => {
             lang = (lang === "de") ? "en" : "de";
@@ -389,19 +386,22 @@
         });
 
 
-        window.addEventListener("DOMContentLoaded", () => {
+        // ===== Website Load =====
+        window.addEventListener("DOMContentLoaded", async () => {
+            await loadWebsiteAdminTry();
             toggleSwitch.classList.toggle("on", !noobMode);
             langToggle.classList.toggle("on", lang === "en");
-            adminToggle.classList.toggle("on", authenticated);
+            adminToggle.classList.toggle("on", !!adminPassword);
             updateTileDescriptions();
         });
 
-        
+
+        // ===== Tile Descriptions =====
         function updateTileDescriptions() {
             tiles.forEach(tile => {
                 const descDiv = tile.querySelector(".tile-desc");
                 if (!descDiv) return;
-        
+
                 if (noobMode) {
                     descDiv.textContent = (lang === "en") ? descDiv.dataset.descEn : descDiv.dataset.descDe;
                     descDiv.classList.add("visible");
@@ -410,17 +410,14 @@
                 }
             });
         }
-        
+
 
         // ===== Admin toggle =====
-        // Admin toggle
         adminToggle.addEventListener("click", async () => {
-            const isAdmin = adminToggle.classList.contains("on");
-            if (!isAdmin) {
-                // First-time password entry
+            if (!adminPassword) {
                 const pw = prompt("Enter password to unlock Admin actions:");
                 if (!pw) return;
-        
+
                 try {
                     const res = await fetch('/verify-password', {
                         method: 'POST',
@@ -429,21 +426,44 @@
                     });
                     const text = await res.text();
                     if (text === "OK") {
-                        adminToggle.classList.add("on");
                         adminPassword = pw;
+                        adminToggle.classList.add("on");
                     } else {
-                        alert("Incorrect password!");
+                        actionText.textContent = "Incorrect password!";
                     }
                 } catch (e) {
                     alert("Error: " + e);
                 }
             } else {
-                // Logout
-                adminToggle.classList.remove("on");
                 adminPassword = null;
+                adminToggle.classList.remove("on");
             }
         });
-        
+
+
+        // ===== See if admin on LoadWebsite =====
+        async function loadWebsiteAdminTry()  {
+            if (!adminPassword) {
+                const pw = "Test";
+                try {
+                    const res = await fetch('/verify-password', {
+                        method: 'POST',
+                        headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({password: pw})
+                    });
+                    const text = await res.text();
+                    if (text === "OK") {
+                        adminPassword = pw;
+                        adminToggle.classList.add("on");
+                        return;
+                    }
+                } catch (e) {
+                    alert("Error: " + e);
+                }
+            }
+            adminPassword = null;
+            adminToggle.classList.remove("on");
+        }
 
 
         // ===== Fetch Service Status & Update Tiles =====
@@ -464,28 +484,27 @@
                     }
                 });
         }
-
-        // Run immediately, then every 500ms
+        // Run immediately, then every 1000ms
         updateServiceStatus();
-        setInterval(updateServiceStatus, 500);
+        setInterval(updateServiceStatus, 1000);
 
-        // ===== Service buttons =====
+
+        // ===== Service buttons Start / Stop =====
         function toggleService(event, service) {
             event.stopPropagation();
             event.preventDefault();
-        
+
             if (!adminPassword) {
                 alert("Switch to Admin and enter password first!");
                 return;
             }
-        
+
             fetch('/service-status')
                 .then(r => r.json())
                 .then(status => {
                     const running = status[service];
                     const url = running ? `/stop/${service}` : `/start/${service}`;
                     
-                    // Send password with request
                     fetch(url, {
                         method: 'POST',
                         headers: {'Content-Type':'application/json'},
@@ -496,16 +515,17 @@
                     .catch(e => actionText.textContent = "Error: " + e);
                 });
         }
-        
+
+
         // ===== Shutdown =====
         function shutdown() {
             if (!adminPassword) {
                 alert("Switch to Admin and enter password first!");
                 return;
             }
-        
+
             if (!confirm("Are you sure you want to shutdown?")) return;
-        
+
             actionText.textContent = "Processing shutdown...";
             fetch('/shutdown', {
                 method: 'POST',
@@ -516,6 +536,7 @@
             .then(d => { actionText.textContent = d; })
             .catch(e => { actionText.textContent = 'Error: ' + e; });
         }
+
            
     </script>
 </body>
