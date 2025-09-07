@@ -284,6 +284,42 @@ def stop(service):
     return stop_service(service)
 
 
+# ===== Start all services =====
+@app.route("/start-all", methods=["POST"])
+def start_all():
+    if not is_local_request():
+        data = request.get_json()
+        if not data or 'password' not in data or not check_password(data['password']):
+            return "Unauthorized: invalid password", 403
+
+    results = {}
+    for service in SERVICES:
+        if is_service_running(service):
+            results[service] = f"{service} already running"
+        else:
+            msg = start_service(service)
+            results[service] = msg if isinstance(msg, str) else str(msg)
+    return jsonify(results)
+
+
+# ===== Stop all services =====
+@app.route("/stop-all", methods=["POST"])
+def stop_all():
+    if not is_local_request():
+        data = request.get_json()
+        if not data or 'password' not in data or not check_password(data['password']):
+            return "Unauthorized: invalid password", 403
+
+    results = {}
+    for service in SERVICES:
+        if not is_service_running(service):
+            results[service] = f"{service} already stopped"
+        else:
+            msg = stop_service(service)
+            results[service] = msg if isinstance(msg, str) else str(msg)
+    return jsonify(results)
+
+
 # ===== Shutdown =====
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
@@ -291,7 +327,7 @@ def shutdown():
         data = request.get_json()
         if not data or 'password' not in data or not check_password(data['password']):
             return "Unauthorized: invalid password", 403
-    os.system("shutdown /s /f /t 0")  # uncomment when ready
+    os.system("shutdown /s /f /t 0") 
     return "Shutting down..."
 
 
