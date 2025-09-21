@@ -2,7 +2,7 @@ Option Explicit
 
 ' === CONFIG ===
 Dim projectFolder : projectFolder = "D:\NZB\jellyseerr"
-Dim scriptFolder  : scriptFolder  = "D:\Scripts\Jellyseerr"
+Dim scriptFolder  : scriptFolder  = "D:\Scripts\Mathias\Jellyseerr"
 Dim pidFile       : pidFile       = scriptFolder & "\pnpm_start.pid"
 Dim verbose       : verbose       = False
 ' ===============

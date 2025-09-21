@@ -13,7 +13,7 @@ from PySide6.QtCore import Qt, QUrl
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtMultimediaWidgets import QVideoWidget
 
-ROOT_FOLDER = r"C:\\Extractor"
+ROOT_FOLDER = r"C:\\_other\\Celebs\\Extractor"
 ILLEGAL_CHARS = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
 
 
