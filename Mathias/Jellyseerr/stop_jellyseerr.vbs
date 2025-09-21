@@ -1,7 +1,7 @@
 Option Explicit
 
 ' ===== CONFIG =====
-Dim scriptFolder : scriptFolder = "D:\Scripts\Jellyseerr"
+Dim scriptFolder : scriptFolder = "D:\Scripts\Mathias\Jellyseerr"
 Dim pidFile      : pidFile = scriptFolder & "\pnpm_start.pid"
 Dim maxNodeToKill: maxNodeToKill = 3
 Dim spawnWaitMs  : spawnWaitMs = 2500   ' wait (ms) before snapshot
