@@ -69,7 +69,7 @@ PORT_MAPPING = {
     "radarr": 7878,
     "bazarr": 6767,
     "tdarr": 8265,
-    "sabnzbd": 6969,
+    "sabnzbd": 6868,
     "jellyfin": 8096,
     "plex": 32400,
     "jellyseerr": 5055
@@ -333,7 +333,7 @@ if __name__ == "__main__":
 # PORT_MAPPING = {
 #     "sonarr": 8989,
 #     "radarr": 7878,
-#     "sabnzbd": 6969,
+#     "sabnzbd": 6868,
 #     "jellyfin": 8096,
 #     "jellyseerr": 5055,
 #     "plex": 32400,

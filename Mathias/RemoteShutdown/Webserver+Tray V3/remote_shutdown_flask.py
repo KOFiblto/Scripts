@@ -183,7 +183,7 @@ SERVICES = {
         "stop": "taskkill /IM Radarr.exe /F"
     },
     "sabnzbd": {
-        "port": 6969,
+        "port": 6868,
         "type": "exe",
         "start": r"C:\Program Files\SABnzbd\SABnzbd.exe",
         "stop": "taskkill /IM SABnzbd.exe /F"
