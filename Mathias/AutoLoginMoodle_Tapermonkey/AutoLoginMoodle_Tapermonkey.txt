@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Moodle Auto Login from Landing Page (BULME) - Persistent Attempts
+// @name         Moodle Auto Login from Landing Page (BULME) - Persistent Attempts with Reset
 // @namespace    https://moodle.bulme.at/
-// @version      1.6
-// @description  Auto-login to Moodle BULME, max 3 clicks across reloads
+// @version      1.7
+// @description  Auto-login to Moodle BULME, max 3 clicks across reloads, resets after successful login
 // @match        https://moodle.bulme.at/*
 // @grant        none
 // ==/UserScript==
@@ -12,6 +12,11 @@
 
     const USERNAME = "";
     const PASSWORD = "";
+
+    // Reset counter when we're NOT on login page (means login probably worked)
+    if (!window.location.pathname.includes("/login/index.php")) {
+        sessionStorage.removeItem("moodle_login_attempts");
+    }
 
     // Track attempts across reloads
     let attempts = parseInt(sessionStorage.getItem("moodle_login_attempts") || "0");
@@ -29,6 +34,7 @@
     if (window.location.pathname.includes("/login/index.php")) {
         if (attempts >= 3) {
             console.log("Auto-login disabled: already tried 3 times.");
+            alert("Stopped auto-login after 3 attempts.");
             return;
         }
 
@@ -38,19 +44,14 @@
 
         if (usernameField && passwordField && loginBtn) {
             attempts++;
-            sessionStorage.setItem("moodle_login_attempts", attempts); // save for reloads
+            sessionStorage.setItem("moodle_login_attempts", attempts);
 
             usernameField.value = USERNAME;
             passwordField.value = PASSWORD;
-
 
             setTimeout(() => {
                 loginBtn.click();
             }, 200);
         }
-    }
-    // Reset attempts if we're logged in (any page except login)
-    if (!window.location.pathname.includes("/login/index.php")) {
-        sessionStorage.removeItem("moodle_login_attempts");
     }
 })();
