@@ -65,14 +65,13 @@ os.environ["QT_SCALE_FACTOR"] = "1.5"
 SERVER_IP = get_local_ip()
 
 PORT_MAPPING = {
-    "sonarr": 8989,
-    "radarr": 7878,
-    "bazarr": 6767,
-    "tdarr": 8265,
-    "sabnzbd": 6868,
-    "jellyfin": 8096,
-    "plex": 32400,
-    "jellyseerr": 5055
+    "sonarr": 9005,
+    "radarr": 9004,
+    "bazarr": 9003,
+    "tdarr": 9007,
+    "sabnzbd": 9006,
+    "jellyfin": 9001,
+    "plex": 9002
 }
 
 status_cache = {}
