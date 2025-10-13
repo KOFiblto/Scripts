@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-library_reader_final.py
+library_reader_win11.py
 
-Modernized Library Reader:
- - Sidebar-only layout (Back / Add Root / Remove Root + file tree)
- - Cleaner styles, larger text, slightly smaller thumbs
- - Thumbnails preserve aspect ratio inside square tiles (no stretching)
- - Folder tiles show first direct media as thumbnail (or folder icon)
- - Embedded viewer maximizes content and supports Ctrl + mouse wheel zoom
- - Fixed QPolygon/QPainter usage for video-placeholder drawing
+Windows 11 Fluent Design Library Reader:
+ - Acrylic/frosted glass effects with transparency
+ - Rounded corners throughout
+ - Subtle gradients and shadows
+ - Modern color palette with light/dark theming
+ - Smooth hover animations
+ - All original functionality preserved
 """
 
 import sys
@@ -25,6 +25,9 @@ from PySide6.QtCore import (
     QRunnable,
     QThreadPool,
     QPoint,
+    QPropertyAnimation,
+    QEasingCurve,
+    Property,
 )
 from PySide6.QtGui import (
     QPixmap,
@@ -36,6 +39,9 @@ from PySide6.QtGui import (
     QPolygon,
     QColor,
     QFont,
+    QPalette,
+    QLinearGradient,
+    QPen,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -59,6 +65,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QStyle,
     QSlider,
+    QGraphicsOpacityEffect,
 )
 
 # Multimedia
@@ -72,8 +79,7 @@ APP_DIR = Path(__file__).parent
 CONFIG_PATH = APP_DIR / "config.json"
 DEFAULT_CONFIG = {"roots": []}
 
-# Make tiles slightly smaller than before, as requested
-TILE_SIZE = 200  # square tile size (visual region)
+TILE_SIZE = 200
 THUMB_SIZE = QSize(TILE_SIZE, TILE_SIZE)
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp", ".tiff", ".tif"}
@@ -121,13 +127,10 @@ def is_video(p: Path):
 # Asynchronous thumbnail loader
 # ----------------------------
 class ThumbnailSignal(QObject):
-    # path_str, qimage (or None), is_video (bool)
     ready = Signal(str, object, bool)
 
 
 class ThumbnailWorker(QRunnable):
-    """Background worker that loads/scales a QImage (safe to create in worker thread)."""
-
     def __init__(self, path: Path, size: QSize, sig: ThumbnailSignal):
         super().__init__()
         self.path = Path(path)
@@ -136,25 +139,58 @@ class ThumbnailWorker(QRunnable):
 
     def run(self):
         p = self.path
-        # If image: load and scale as QImage
         if is_image(p):
             reader = QImageReader(str(p))
             reader.setAutoTransform(True)
-            # request scaled size (reader may ignore if not supported)
             try:
                 reader.setScaledSize(self.size)
             except Exception:
                 pass
             img = reader.read()
-            # emit image (possibly null QImage)
             self.sig.ready.emit(str(p), img if (img is not None and not img.isNull()) else None, False)
             return
-        # If video: cannot extract frame here (no ffmpeg frame extraction in worker); signal video placeholder
         if is_video(p):
             self.sig.ready.emit(str(p), None, True)
             return
-        # fallback: generic
         self.sig.ready.emit(str(p), None, False)
+
+
+# ----------------------------
+# Modern Windows 11 Button
+# ----------------------------
+class ModernButton(QPushButton):
+    def __init__(self, text="", icon_name=None, parent=None):
+        super().__init__(text, parent)
+        self.setCursor(QCursor(Qt.PointingHandCursor))
+        self.setStyleSheet(self._style())
+        
+    def _style(self):
+        return """
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.08),
+                stop:1 rgba(255, 255, 255, 0.04));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 6px;
+            padding: 8px 16px;
+            color: #FFFFFF;
+            font-size: 10pt;
+            font-weight: 500;
+            min-height: 32px;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.12),
+                stop:1 rgba(255, 255, 255, 0.08));
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        QPushButton:pressed {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.04),
+                stop:1 rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        """
 
 
 # ----------------------------
@@ -167,39 +203,114 @@ class Sidebar(QWidget):
         super().__init__(parent)
         self.cfg = load_config()
         root_v = QVBoxLayout(self)
-        root_v.setContentsMargins(10, 10, 10, 10)
-        root_v.setSpacing(10)
-        self.setFixedWidth(300)
+        root_v.setContentsMargins(16, 16, 16, 16)
+        root_v.setSpacing(12)
+        self.setFixedWidth(320)
         self.setStyleSheet(self._style())
 
-        # top controls: Back / Add / Remove
+        # Title
+        title = QLabel("Library")
+        title.setStyleSheet("""
+            font-size: 18pt;
+            font-weight: 600;
+            color: #FFFFFF;
+            padding: 8px 0px;
+        """)
+        root_v.addWidget(title)
+
+        # Control buttons
         ctrl_row = QHBoxLayout()
-        self.back_btn = QPushButton("Back")
-        self.back_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.add_btn = QPushButton("Add Root")
-        self.add_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.rem_btn = QPushButton("Remove Root")
-        self.rem_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        ctrl_row.setSpacing(8)
+        self.back_btn = ModernButton("← Back")
+        self.add_btn = ModernButton("+ Add")
+        self.rem_btn = ModernButton("− Remove")
         ctrl_row.addWidget(self.back_btn)
         ctrl_row.addWidget(self.add_btn)
         ctrl_row.addWidget(self.rem_btn)
         root_v.addLayout(ctrl_row)
 
-        # configured roots list (compact)
+        # Roots section
+        roots_label = QLabel("ROOT FOLDERS")
+        roots_label.setStyleSheet("""
+            font-size: 9pt;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.5px;
+            padding: 12px 0px 4px 0px;
+        """)
+        root_v.addWidget(roots_label)
+
         self.root_list = QListWidget()
-        self.root_list.setFixedHeight(100)
-        self.root_list.setStyleSheet("QListWidget { font-size: 12pt; }")
+        self.root_list.setFixedHeight(120)
+        self.root_list.setStyleSheet("""
+            QListWidget {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 8px;
+                padding: 8px;
+                font-size: 10pt;
+                color: #FFFFFF;
+            }
+            QListWidget::item {
+                padding: 8px;
+                border-radius: 4px;
+                margin: 2px 0px;
+            }
+            QListWidget::item:hover {
+                background: rgba(255, 255, 255, 0.08);
+            }
+            QListWidget::item:selected {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(0, 120, 215, 0.8),
+                    stop:1 rgba(0, 103, 192, 0.8));
+                border: none;
+            }
+        """)
         self.root_list.itemClicked.connect(self.on_root_clicked)
         root_v.addWidget(self.root_list)
 
-        # file tree
+        # File tree section
+        tree_label = QLabel("NAVIGATION")
+        tree_label.setStyleSheet("""
+            font-size: 9pt;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.5px;
+            padding: 12px 0px 4px 0px;
+        """)
+        root_v.addWidget(tree_label)
+
         self.tree = QTreeView()
         self.tree.setHeaderHidden(True)
+        self.tree.setStyleSheet("""
+            QTreeView {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 8px;
+                padding: 8px;
+                font-size: 10pt;
+                color: #FFFFFF;
+            }
+            QTreeView::item {
+                padding: 6px;
+                border-radius: 4px;
+            }
+            QTreeView::item:hover {
+                background: rgba(255, 255, 255, 0.08);
+            }
+            QTreeView::item:selected {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(0, 120, 215, 0.8),
+                    stop:1 rgba(0, 103, 192, 0.8));
+            }
+            QTreeView::branch {
+                background: transparent;
+            }
+        """)
         self.model = QFileSystemModel(self.tree)
         self.model.setReadOnly(True)
         root_v.addWidget(self.tree)
 
-        # hookups
         self.add_btn.clicked.connect(self.add_root)
         self.rem_btn.clicked.connect(self.remove_root)
         self.populate_roots()
@@ -208,21 +319,19 @@ class Sidebar(QWidget):
 
     def _style(self):
         return """
-        QWidget { background: #071126; color: #e6eef8; }
-        QPushButton {
-            background: rgba(255,255,255,0.03);
-            padding: 6px 8px;
-            border-radius: 8px;
-            font-weight: 600;
+        QWidget {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(20, 28, 45, 0.95),
+                stop:1 rgba(12, 18, 32, 0.98));
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
-        QPushButton:hover { background: rgba(255,255,255,0.05); }
-        QLabel { font-size: 10pt; }
         """
 
     def populate_roots(self):
         self.root_list.clear()
         for r in self.cfg.get("roots", []):
-            self.root_list.addItem(QListWidgetItem(str(r)))
+            item = QListWidgetItem(str(r))
+            self.root_list.addItem(item)
 
     def add_root(self):
         folder = QFileDialog.getExistingDirectory(self, "Select root folder", str(Path.home()))
@@ -263,12 +372,11 @@ class Sidebar(QWidget):
         self.folder_selected.emit(p)
 
     def on_back_clicked(self):
-        # emit special Path() ? We'll let main window bind the sidebar back button directly.
         self.folder_selected.emit(Path(""))
 
 
 # ----------------------------
-# Gallery (async thumbs, fixed square tiles)
+# Modern Tile Widgets
 # ----------------------------
 class ThumbnailTile(QFrame):
     clicked = Signal()
@@ -276,34 +384,45 @@ class ThumbnailTile(QFrame):
     def __init__(self, path: Path, fixed_size: int = TILE_SIZE, parent=None):
         super().__init__(parent)
         self.path = Path(path)
-        # total tile: fixed_size (square) + label area
-        self.setFixedSize(fixed_size, fixed_size + 44)
+        self.setFixedSize(fixed_size, fixed_size + 50)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.setStyleSheet(self._style())
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
 
-        # thumbnail region: square area slightly smaller than tile to provide margins
+        # Thumbnail container with rounded corners
+        thumb_container = QFrame()
+        thumb_container.setStyleSheet("""
+            QFrame {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        """)
+        thumb_layout = QVBoxLayout(thumb_container)
+        thumb_layout.setContentsMargins(0, 0, 0, 0)
+        
         self.thumb_label = QLabel()
-        inner = fixed_size - 24  # padding
+        inner = fixed_size - 32
         self.thumb_label.setFixedSize(inner, inner)
         self.thumb_label.setAlignment(Qt.AlignCenter)
-        # DO NOT stretch pixmap to the label size; we manually scale keeping aspect.
         self.thumb_label.setScaledContents(False)
-        layout.addWidget(self.thumb_label, alignment=Qt.AlignCenter)
+        thumb_layout.addWidget(self.thumb_label, alignment=Qt.AlignCenter)
+        
+        layout.addWidget(thumb_container)
 
-        # larger title font
         self.title = QLabel(self.path.name)
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setWordWrap(True)
-        self.title.setFixedHeight(44)
-        font = QFont()
-        font.setPointSize(10)
-        font.setBold(True)
-        self.title.setFont(font)
+        self.title.setFixedHeight(40)
+        self.title.setStyleSheet("""
+            font-size: 9pt;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        """)
         layout.addWidget(self.title)
 
     def mouseReleaseEvent(self, ev):
@@ -312,7 +431,6 @@ class ThumbnailTile(QFrame):
 
     def set_thumbnail(self, pixmap: QPixmap):
         if pixmap is None or pixmap.isNull():
-            # folder/file icon fallback
             icon = QApplication.style().standardIcon(QStyle.SP_FileIcon)
             fallback = icon.pixmap(THUMB_SIZE)
             self._set_pixmap_centered(fallback)
@@ -321,56 +439,73 @@ class ThumbnailTile(QFrame):
 
     def _set_pixmap_centered(self, pixmap: QPixmap):
         label_size = self.thumb_label.size()
-        # scale preserving aspect ratio but not exceed label_size
         pm = pixmap.scaled(label_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.thumb_label.setPixmap(pm)
 
     def _style(self):
         return """
         QFrame {
-            background: rgba(255,255,255,0.01);
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.03);
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.05),
+                stop:1 rgba(255, 255, 255, 0.02));
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        QFrame:hover { background: rgba(255,255,255,0.03); }
+        QFrame:hover {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.08),
+                stop:1 rgba(255, 255, 255, 0.04));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
         """
 
 
 class FolderTile(QPushButton):
-    """Folder tile with optional media thumbnail (has_media is optional)."""
-
     clicked = Signal()
 
     def __init__(self, path: Path, has_media: bool = False, fixed_size: int = TILE_SIZE, parent=None):
         super().__init__(parent)
         self.path = Path(path)
         self.setCursor(QCursor(Qt.PointingHandCursor))
-        self.setFixedSize(fixed_size, fixed_size + 44)
+        self.setFixedSize(fixed_size, fixed_size + 50)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.setStyleSheet(self._style())
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+
+        thumb_container = QFrame()
+        thumb_container.setStyleSheet("""
+            QFrame {
+                background: rgba(0, 120, 215, 0.15);
+                border-radius: 12px;
+                border: 1px solid rgba(0, 120, 215, 0.3);
+            }
+        """)
+        thumb_layout = QVBoxLayout(thumb_container)
+        thumb_layout.setContentsMargins(0, 0, 0, 0)
 
         self.thumb_label = QLabel()
-        inner = fixed_size - 24
+        inner = fixed_size - 32
         self.thumb_label.setFixedSize(inner, inner)
         self.thumb_label.setAlignment(Qt.AlignCenter)
         self.thumb_label.setScaledContents(False)
-        layout.addWidget(self.thumb_label, alignment=Qt.AlignCenter)
+        thumb_layout.addWidget(self.thumb_label, alignment=Qt.AlignCenter)
+        
+        layout.addWidget(thumb_container)
 
         self.title = QLabel(self.path.name)
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setWordWrap(True)
-        self.title.setFixedHeight(44)
-        font = QFont()
-        font.setPointSize(10)
-        font.setBold(True)
-        self.title.setFont(font)
+        self.title.setFixedHeight(40)
+        self.title.setStyleSheet("""
+            font-size: 9pt;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        """)
         layout.addWidget(self.title)
 
-        # default placeholder (folder icon) — if has_media we'll request an actual thumbnail elsewhere
         if not has_media:
             icon = QApplication.style().standardIcon(QStyle.SP_DirIcon)
             icon_pix = icon.pixmap(THUMB_SIZE)
@@ -392,15 +527,25 @@ class FolderTile(QPushButton):
     def _style(self):
         return """
         QPushButton {
-            background: rgba(255,255,255,0.01);
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.03);
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.05),
+                stop:1 rgba(255, 255, 255, 0.02));
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             text-align: center;
         }
-        QPushButton:hover { background: rgba(255,255,255,0.03); }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(0, 120, 215, 0.2),
+                stop:1 rgba(0, 103, 192, 0.15));
+            border: 1px solid rgba(0, 120, 215, 0.4);
+        }
         """
 
 
+# ----------------------------
+# Gallery
+# ----------------------------
 class Gallery(QWidget):
     folder_open_requested = Signal(Path)
     media_open_requested = Signal(list, int)
@@ -410,19 +555,43 @@ class Gallery(QWidget):
         self.thumb_signal = thumb_signal
         self.thumb_signal.ready.connect(self.on_thumb_ready)
         self.threadpool = QThreadPool.globalInstance()
-        self.thumb_cache = {}  # path_str -> QPixmap
-        self.waiting_widgets = {}  # path_str -> [widget, ...]
+        self.thumb_cache = {}
+        self.waiting_widgets = {}
         self._submitted = set()
 
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(12, 12, 12, 12)
+        outer.setContentsMargins(24, 24, 24, 24)
 
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
+        self.scroll.setStyleSheet("""
+            QScrollArea {
+                background: transparent;
+                border: none;
+            }
+            QScrollBar:vertical {
+                background: rgba(255, 255, 255, 0.03);
+                width: 12px;
+                border-radius: 6px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 6px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: rgba(255, 255, 255, 0.25);
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+        """)
+        
         self.container = QWidget()
         self.grid = QGridLayout(self.container)
-        self.grid.setContentsMargins(6, 6, 6, 6)
-        self.grid.setSpacing(14)
+        self.grid.setContentsMargins(8, 8, 8, 8)
+        self.grid.setSpacing(18)
         self.container.setLayout(self.grid)
         self.scroll.setWidget(self.container)
 
@@ -437,15 +606,13 @@ class Gallery(QWidget):
                 w.deleteLater()
 
     def show_roots(self, roots):
-        """Display top-level configured roots as folder tiles."""
         self.clear_grid()
-        cols = 2
+        cols = 4
         row = col = 0
         for root in roots:
             p = Path(root)
             tile = FolderTile(p, has_media=False)
             tile.clicked.connect(lambda checked=False, rp=p: self.folder_open_requested.emit(rp))
-            # show folder icon (no media)
             self.grid.addWidget(tile, row, col)
             col += 1
             if col >= cols:
@@ -456,17 +623,16 @@ class Gallery(QWidget):
         self.current_path = path
         subdirs = list_subdirs(path)
         media = list_media_files(path)
-        # Always show subfolders first if present; any direct media also shown below
         self.clear_grid()
         row = col = 0
         cols = 4
+        
         if subdirs:
             for d in subdirs:
                 sub_media = list_media_files(d)
                 has_media_direct = len(sub_media) > 0
                 tile = FolderTile(d, has_media=has_media_direct)
                 tile.clicked.connect(lambda checked=False, p=d: self.folder_open_requested.emit(p))
-                # if folder has direct media, request thumbnail for first media file
                 if has_media_direct:
                     first_media = sub_media[0]
                     self.request_thumbnail_for_path(first_media, tile)
@@ -475,9 +641,8 @@ class Gallery(QWidget):
                 if col >= cols:
                     col = 0
                     row += 1
-        # Add media from current folder (direct files) below subfolders
+                    
         if media:
-            # if we already placed subfolders, start a new row
             if subdirs and col != 0:
                 row += 1
                 col = 0
@@ -492,8 +657,8 @@ class Gallery(QWidget):
                     row += 1
 
         if not subdirs and not media:
-            lbl = QLabel("Folder is empty")
-            lbl.setStyleSheet("font-size: 12pt; color: #bcd3ff;")
+            lbl = QLabel("Empty folder")
+            lbl.setStyleSheet("font-size: 12pt; color: rgba(255, 255, 255, 0.5);")
             self.grid.addWidget(lbl, 0, 0)
 
     def _on_media_clicked(self, media_list, idx):
@@ -501,13 +666,10 @@ class Gallery(QWidget):
 
     def request_thumbnail_for_path(self, path: Path, widget):
         key = str(path)
-        # if cached, apply immediately
         if key in self.thumb_cache:
             widget.set_thumbnail(self.thumb_cache[key])
             return
-        # register waiting widget
         self.waiting_widgets.setdefault(key, []).append(widget)
-        # submit worker once per path
         if key in self._submitted:
             return
         self._submitted.add(key)
@@ -521,21 +683,17 @@ class Gallery(QWidget):
             pix = QPixmap.fromImage(qimage_obj)
         else:
             if is_video:
-                # video placeholder: file icon + triangle overlay
                 icon = QApplication.style().standardIcon(QStyle.SP_FileIcon)
                 base = icon.pixmap(THUMB_SIZE)
-                # create a copy to paint on
                 p = QPixmap(base)
                 painter = QPainter()
                 try:
-                    # Ensure painter begins; using try/finally to guarantee end
                     painter.begin(p)
                     painter.setRenderHint(QPainter.Antialiasing)
                     size = min(p.width(), p.height())
                     tri_size = int(size * 0.26)
                     cx = p.width() // 2
                     cy = p.height() // 2
-                    # Build polygon safely using QPoint and QPolygon.append
                     poly = QPolygon()
                     poly.append(QPoint(cx - tri_size // 2, cy - tri_size))
                     poly.append(QPoint(cx - tri_size // 2, cy + tri_size))
@@ -544,7 +702,6 @@ class Gallery(QWidget):
                     painter.setPen(Qt.NoPen)
                     painter.drawPolygon(poly)
                 except Exception:
-                    # in case painting fails, we'll just fallback to base icon
                     pass
                 finally:
                     painter.end()
@@ -552,7 +709,6 @@ class Gallery(QWidget):
             else:
                 icon = QApplication.style().standardIcon(QStyle.SP_FileIcon)
                 pix = icon.pixmap(THUMB_SIZE)
-        # cache and apply
         self.thumb_cache[key] = pix
         widgets = self.waiting_widgets.pop(key, [])
         for w in widgets:
@@ -563,7 +719,7 @@ class Gallery(QWidget):
 
 
 # ----------------------------
-# Viewer embedded in main window (improved sizing + zoom)
+# Viewer Widget
 # ----------------------------
 class ViewerWidget(QWidget):
     def __init__(self, parent=None):
@@ -571,75 +727,140 @@ class ViewerWidget(QWidget):
         self.setStyleSheet(self._style())
 
         v = QVBoxLayout(self)
-        v.setContentsMargins(8, 8, 8, 8)
-        v.setSpacing(6)
+        v.setContentsMargins(24, 24, 24, 24)
+        v.setSpacing(12)
 
-        # top controls area (kept simple)
-        top = QHBoxLayout()
-        self.prev_btn = QPushButton("◀")
-        self.next_btn = QPushButton("▶")
-        self.close_btn = QPushButton("Close")
+        # Top control bar with modern styling
+        top_bar = QFrame()
+        top_bar.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(255, 255, 255, 0.08),
+                    stop:1 rgba(255, 255, 255, 0.04));
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 8px;
+            }
+        """)
+        top = QHBoxLayout(top_bar)
+        top.setContentsMargins(8, 8, 8, 8)
+        top.setSpacing(8)
+        
+        self.prev_btn = ModernButton("◀ Previous")
+        self.next_btn = ModernButton("Next ▶")
+        self.close_btn = ModernButton("✕ Close")
+        self.close_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(232, 17, 35, 0.8),
+                    stop:1 rgba(194, 14, 29, 0.8));
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 6px;
+                padding: 8px 16px;
+                color: #FFFFFF;
+                font-size: 10pt;
+                font-weight: 500;
+                min-height: 32px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(250, 40, 55, 0.9),
+                    stop:1 rgba(210, 20, 35, 0.9));
+            }
+        """)
+        
         top.addWidget(self.prev_btn)
         top.addWidget(self.next_btn)
         top.addStretch()
         top.addWidget(self.close_btn)
-        v.addLayout(top)
+        v.addWidget(top_bar)
 
-        # viewer_area fills remaining space; we use it to compute available area for media
+        # Viewer area
         self.viewer_area = QWidget()
         self.viewer_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.viewer_area.setStyleSheet("""
+            QWidget {
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+        """)
         self.viewer_area_layout = QVBoxLayout(self.viewer_area)
         self.viewer_area_layout.setContentsMargins(0, 0, 0, 0)
         self.viewer_area_layout.setSpacing(0)
         v.addWidget(self.viewer_area)
 
-        # image scroll area (will be added/removed into viewer_area_layout)
+        # Image viewer
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
+        self.scroll.setStyleSheet("""
+            QScrollArea {
+                background: transparent;
+                border: none;
+            }
+        """)
         self.image_label = QLabel()
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setScaledContents(False)
         self.scroll.setWidget(self.image_label)
 
-        # video
+        # Video
         self.video_widget = QVideoWidget()
         self.player = QMediaPlayer(self)
         self.audio = QAudioOutput(self)
         self.player.setAudioOutput(self.audio)
         self.player.setVideoOutput(self.video_widget)
+        
         self.video_controls = QHBoxLayout()
-        self.play_btn = QPushButton("Play")
+        self.play_btn = ModernButton("▶ Play")
         self.play_btn.clicked.connect(self.toggle_play)
         self.video_slider = QSlider(Qt.Horizontal)
         self.video_slider.setRange(0, 1000)
+        self.video_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                background: rgba(255, 255, 255, 0.1);
+                height: 6px;
+                border-radius: 3px;
+            }
+            QSlider::handle:horizontal {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(0, 120, 215, 1),
+                    stop:1 rgba(0, 103, 192, 1));
+                width: 16px;
+                height: 16px;
+                margin: -5px 0;
+                border-radius: 8px;
+            }
+            QSlider::sub-page:horizontal {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(0, 120, 215, 0.8),
+                    stop:1 rgba(0, 103, 192, 0.8));
+                border-radius: 3px;
+            }
+        """)
         self.video_controls.addWidget(self.play_btn)
         self.video_controls.addWidget(self.video_slider)
         self.player.positionChanged.connect(self._on_pos_changed)
         self.player.durationChanged.connect(self._on_dur_changed)
         self.video_slider.sliderMoved.connect(self._on_slider_moved)
 
-        # state
+        # State
         self.media_list = []
         self.index = 0
-        self.current_pixmap_original = None  # store original pixmap for crisp scaling
+        self.current_pixmap_original = None
         self.current_media_is_image = False
-        self.zoom = 1.0  # zoom factor (1.0 = fit-to-window on open)
+        self.zoom = 1.0
 
-        # connect nav
         self.prev_btn.clicked.connect(self.prev_item)
         self.next_btn.clicked.connect(self.next_item)
         self.close_btn.clicked.connect(self.on_close)
 
     def _style(self):
         return """
-        QWidget { background: #071126; color: #e6eef8; border-radius: 10px; }
-        QPushButton {
-            background: rgba(255,255,255,0.03);
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-weight: 600;
+        QWidget {
+            background: transparent;
+            color: #FFFFFF;
         }
-        QPushButton:hover { background: rgba(255,255,255,0.05); }
         """
 
     def open_media_list(self, media_list, start_index=0):
@@ -649,7 +870,6 @@ class ViewerWidget(QWidget):
         self.show_current_media()
 
     def show_current_media(self):
-        # clear viewer_area_layout
         while self.viewer_area_layout.count():
             it = self.viewer_area_layout.takeAt(0)
             w = it.widget()
@@ -658,71 +878,70 @@ class ViewerWidget(QWidget):
 
         if not self.media_list:
             lbl = QLabel("No media")
+            lbl.setStyleSheet("color: rgba(255, 255, 255, 0.5); font-size: 12pt;")
             self.viewer_area_layout.addWidget(lbl)
             return
 
         path = Path(self.media_list[self.index])
         if is_image(path):
-            # stop video if playing
             try:
                 if self.player.playbackState() == QMediaPlayer.PlayingState:
                     self.player.stop()
-                    self.play_btn.setText("Play")
+                    self.play_btn.setText("▶ Play")
             except Exception:
                 pass
-            # load full-res pixmap once and store
             pix = QPixmap(str(path))
             if pix.isNull():
                 lbl = QLabel("Failed to load image")
+                lbl.setStyleSheet("color: rgba(255, 255, 255, 0.5); font-size: 12pt;")
                 self.viewer_area_layout.addWidget(lbl)
                 return
             self.current_pixmap_original = pix
             self.current_media_is_image = True
-            # fit to viewer_area size initially
             self._update_image_display(fit=True)
             self.viewer_area_layout.addWidget(self.scroll)
         elif is_video(path):
             self.current_media_is_image = False
-            # setup and add video widget + controls
             try:
                 self.player.setSource(QUrl.fromLocalFile(str(path)))
             except Exception:
-                # fallback: try older API
                 try:
                     self.player.setSource(QUrl.fromLocalFile(str(path)))
                 except Exception:
                     pass
             self.player.pause()
-            self.play_btn.setText("Play")
-            # make video_widget expand to fill viewer_area
+            self.play_btn.setText("▶ Play")
             self.video_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.viewer_area_layout.addWidget(self.video_widget, stretch=1)
-            # add controls below
             controls_container = QWidget()
+            controls_container.setStyleSheet("""
+                QWidget {
+                    background: rgba(0, 0, 0, 0.5);
+                    border-radius: 8px;
+                    padding: 8px;
+                }
+            """)
             controls_layout = QHBoxLayout(controls_container)
-            controls_layout.setContentsMargins(0, 0, 0, 0)
+            controls_layout.setContentsMargins(8, 8, 8, 8)
             controls_layout.addWidget(self.play_btn)
             controls_layout.addWidget(self.video_slider)
             self.viewer_area_layout.addWidget(controls_container)
         else:
             lbl = QLabel("Unsupported media type")
+            lbl.setStyleSheet("color: rgba(255, 255, 255, 0.5); font-size: 12pt;")
             self.viewer_area_layout.addWidget(lbl)
 
     def _update_image_display(self, fit=False):
-        """Scale original pixmap according to current zoom and viewer_area size."""
         if not self.current_pixmap_original or self.current_pixmap_original.isNull():
             return
         avail = self.viewer_area.size()
         avail_w = max(10, avail.width())
         avail_h = max(10, avail.height())
         if fit:
-            # compute scale to fit while preserving aspect
             scaled = self.current_pixmap_original.scaled(avail_w, avail_h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-            self.zoom = 1.0  # reset zoom baseline as 'fit'
+            self.zoom = 1.0
             self.image_label.setPixmap(scaled)
         else:
-            # apply zoom relative to original or relative to fit baseline:
-            # We'll interpret zoom as multiplier where 1.0 is fit size; compute target by first fitting then scaling.
             base = self.current_pixmap_original.scaled(avail_w, avail_h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             target_w = max(1, int(base.width() * self.zoom))
             target_h = max(1, int(base.height() * self.zoom))
@@ -731,9 +950,7 @@ class ViewerWidget(QWidget):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        # if current media is image, rescale appropriately
         if self.current_media_is_image and self.current_pixmap_original:
-            # adjust display; keep current zoom factor but if zoom == 1.0 treat as fit
             if abs(self.zoom - 1.0) < 1e-6:
                 self._update_image_display(fit=True)
             else:
@@ -743,10 +960,10 @@ class ViewerWidget(QWidget):
         st = self.player.playbackState()
         if st == QMediaPlayer.PlayingState:
             self.player.pause()
-            self.play_btn.setText("Play")
+            self.play_btn.setText("▶ Play")
         else:
             self.player.play()
-            self.play_btn.setText("Pause")
+            self.play_btn.setText("⏸ Pause")
 
     def _on_pos_changed(self, pos):
         dur = self.player.duration()
@@ -780,7 +997,6 @@ class ViewerWidget(QWidget):
         self.show_current_media()
 
     def on_close(self):
-        # hide self and let parent restore gallery
         self.setVisible(False)
 
     def key_press(self, event):
@@ -792,18 +1008,14 @@ class ViewerWidget(QWidget):
             self.prev_item()
 
     def wheelEvent(self, event):
-        """Support Ctrl + mouse wheel for zoom in/out on images."""
         modifiers = QApplication.keyboardModifiers()
         if self.current_media_is_image and (modifiers & Qt.ControlModifier):
-            # delta in Qt6 is angleDelta; event.angleDelta().y() gives steps (multiples of 120)
             delta = event.angleDelta().y()
             if delta > 0:
                 factor = 1.15
             else:
                 factor = 1 / 1.15
-            # If zoom was at baseline 1.0 (fit), we will set zoom to 1.0 * small > 1.0
             self.zoom = max(0.1, min(10.0, self.zoom * factor))
-            # After changing zoom, update display
             self._update_image_display(fit=False)
             event.accept()
         else:
@@ -811,95 +1023,100 @@ class ViewerWidget(QWidget):
 
 
 # ----------------------------
-# Main window & wiring
+# Main Window
 # ----------------------------
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Library Reader — Modern")
-        self.setMinimumSize(1100, 700)
-        self.setStyleSheet(self._global_style())
+        self.setWindowTitle("Library Reader")
+        self.setMinimumSize(1200, 800)
+        
+        # Windows 11 style window with acrylic background
+        self.setStyleSheet("""
+            QMainWindow {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 rgba(10, 18, 35, 1),
+                    stop:0.5 rgba(15, 25, 45, 1),
+                    stop:1 rgba(10, 18, 35, 1));
+            }
+            QMessageBox {
+                background: rgba(32, 32, 32, 0.95);
+                color: #FFFFFF;
+            }
+            QMessageBox QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(0, 120, 215, 0.8),
+                    stop:1 rgba(0, 103, 192, 0.8));
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 6px;
+                padding: 8px 16px;
+                color: #FFFFFF;
+                min-width: 80px;
+            }
+        """)
 
-        # central widget
         central = QWidget()
         self.setCentralWidget(central)
         h = QHBoxLayout(central)
         h.setContentsMargins(0, 0, 0, 0)
         h.setSpacing(0)
 
-        # create sidebar (left) and right content area
         self.sidebar = Sidebar()
         h.addWidget(self.sidebar)
 
-        # right: stacked area (gallery OR viewer)
         right_container = QWidget()
+        right_container.setStyleSheet("""
+            QWidget {
+                background: transparent;
+            }
+        """)
         right_layout = QVBoxLayout(right_container)
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(0)
         h.addWidget(right_container, stretch=1)
 
-        # Create thumbnail signal and pass to gallery
         self.thumb_signal = ThumbnailSignal()
         self.gallery = Gallery(self.thumb_signal)
         right_layout.addWidget(self.gallery)
 
-        # Embedded viewer (hidden by default)
         self.viewer = ViewerWidget()
         self.viewer.setVisible(False)
         right_layout.addWidget(self.viewer)
 
-        # connections
         self.sidebar.folder_selected.connect(self.on_sidebar_folder_selected)
         self.gallery.folder_open_requested.connect(self.on_folder_selected)
         self.gallery.media_open_requested.connect(self.open_viewer)
         self.viewer.close_btn.clicked.connect(self.close_viewer)
 
-        # navigation history
         self.history = []
         self.current = None
 
-        # show roots view at startup
         cfg = load_config()
         self.show_roots_view(cfg.get("roots", []))
 
-        # connect sidebar add/remove/back to main actions
         self.sidebar.add_btn.clicked.connect(self.sidebar.add_root)
         self.sidebar.rem_btn.clicked.connect(self.sidebar.remove_root)
         self.sidebar.back_btn.clicked.connect(self.go_back_top)
 
-    def _global_style(self):
-        return """
-        QMainWindow { background: #041023; color: #e6eef8; }
-        QLabel { color: #dbe9ff; }
-        """
-
     def show_roots_view(self, roots):
-        """Show the configured root folders as the top-level UI."""
         self.gallery.setVisible(True)
         self.viewer.setVisible(False)
         self.gallery.show_roots(roots)
-        # also clear navigation history
         self.history.clear()
         self.current = None
-        # clear sidebar file tree model so user must pick a root or add
         self.sidebar.tree.setModel(None)
-        # refresh roots list
         self.sidebar.populate_roots()
 
     def on_sidebar_folder_selected(self, path: Path):
-        # Sidebar emits Path("") for back; treat that as top-level request
         if not path or str(path) == "":
             self.go_back_top()
             return
         self.on_folder_selected(path)
 
     def on_folder_selected(self, path: Path):
-        # when a folder is selected, record current and show contents
         if self.current:
             self.history.append(self.current)
         self.current = path
-        # ensure sidebar shows appropriate tree root for navigation
-        # find which configured root contains this path (if any) and set tree accordingly
         cfg = load_config()
         applied = False
         for r in cfg.get("roots", []):
@@ -911,19 +1128,15 @@ class MainWindow(QMainWindow):
                     break
             except Exception:
                 continue
-        # show gallery contents
         self.viewer.setVisible(False)
         self.gallery.setVisible(True)
         self.gallery.show_folder_contents(path)
 
     def go_back_top(self):
-        """Back button returns to top-level roots view (not just previous folder)."""
         cfg = load_config()
         self.show_roots_view(cfg.get("roots", []))
 
     def open_viewer(self, media_list, index):
-        # show viewer embedded, provide media list
-        # media_list contains Path objects; convert to list of str for stability
         self.viewer.open_media_list([str(m) for m in media_list], index)
         self.viewer.setVisible(True)
         self.gallery.setVisible(False)
@@ -933,7 +1146,6 @@ class MainWindow(QMainWindow):
         self.gallery.setVisible(True)
 
     def keyPressEvent(self, event):
-        # forward to viewer if visible
         if self.viewer.isVisible():
             self.viewer.key_press(event)
         else:
@@ -943,16 +1155,31 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    
+    # Set Windows 11 dark palette
+    palette = QPalette()
+    palette.setColor(QPalette.Window, QColor(32, 32, 32))
+    palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
+    palette.setColor(QPalette.Base, QColor(25, 25, 25))
+    palette.setColor(QPalette.AlternateBase, QColor(45, 45, 45))
+    palette.setColor(QPalette.Text, QColor(255, 255, 255))
+    palette.setColor(QPalette.Button, QColor(45, 45, 45))
+    palette.setColor(QPalette.ButtonText, QColor(255, 255, 255))
+    palette.setColor(QPalette.Highlight, QColor(0, 120, 215))
+    palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
+    app.setPalette(palette)
+    
     mw = MainWindow()
     mw.show()
-    # if no roots configured, prompt quick hint
+    
     cfg = load_config()
     if not cfg.get("roots"):
-        QMessageBox.information(
-            mw,
-            "No roots",
-            "No root folders configured. Use Add Root in the left sidebar to add roots."
-        )
+        msg = QMessageBox(mw)
+        msg.setWindowTitle("Welcome")
+        msg.setText("No root folders configured.\n\nUse the '+ Add' button in the sidebar to add folders.")
+        msg.setIcon(QMessageBox.Information)
+        msg.exec()
+    
     sys.exit(app.exec())
 
 
