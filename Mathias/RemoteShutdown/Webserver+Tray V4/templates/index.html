@@ -376,6 +376,14 @@
             <div class="tile-desc" data-desc-de="Suchen" data-desc-en="Discover"></div>
         </a>
         -->
+        <a class="tile tile-service" id="tile-whisparr" href="/whisparr" style="display:none;">
+            <button class="control-btn" onclick="toggleService(event, 'whisper')">
+                <img src="/img/play.webp" alt="Start Whisparr">
+            </button>
+            <img src="/img/whisparr.webp" alt="Whisper">
+            <div class="tile-name">Whisparr</div>
+            <div class="tile-desc" data-desc-de="Andere Video" data-desc-en="Other Videos"></div>
+        </a>
     </div>
 
 
@@ -440,7 +448,21 @@
             langToggle.classList.toggle("on", lang === "en");
             adminToggle.classList.toggle("on", !!adminPassword);
             updateTileDescriptions();
+            updateAdminTiles();
         });
+
+
+        function updateAdminTiles() {
+            const whisperTile = document.getElementById("tile-whisparr");
+            if (!whisperTile) return;
+
+            // Show tile only if admin toggle is ON
+            if (adminToggle.classList.contains("on")) {
+                whisperTile.style.display = "flex";
+            } else {
+                whisperTile.style.display = "none";
+            }
+        }
 
 
         // ===== Tile Descriptions =====
@@ -490,6 +512,7 @@
                 adminPassword = null;
                 adminToggle.classList.remove("on");
             }
+            updateAdminTiles();
         });
         
 
