@@ -7,6 +7,7 @@ import hashlib
 from threading import Thread
 import time
 import subprocess
+import platform
 from flask import Flask, render_template_string, redirect, request, render_template, send_from_directory, make_response, jsonify # type: ignore
 
 
@@ -65,16 +66,20 @@ def is_service_running(service):
     action = SERVICES.get(service)
     if not action:
         return False
-
     container = action["container"]
     try:
         result = subprocess.run(
             ["docker", "inspect", "-f", "{{.State.Running}}", container],
-            capture_output=True, text=True
+            capture_output=True, text=True, timeout=3, creationflags=subprocess.CREATE_NO_WINDOW
         )
         return result.stdout.strip() == "true"
-    except:
+    except subprocess.TimeoutExpired:
+        print(f"Docker call timed out for {container}")
         return False
+    except Exception as e:
+        print(f"Error checking service {container}: {e}")
+        return False
+
 
 
 # ===== Update Service Status =====
@@ -106,6 +111,24 @@ def redirect_to_service(service_name):
     return redirect(url)
 
 
+# ===== Run Docker Command =====
+def run_docker_command(command_args):
+    """Run docker command via PowerShell with hidden window"""
+    full_command = ["powershell", "-WindowStyle", "Hidden"] + command_args
+    
+    try:
+        result = subprocess.run(
+            full_command,
+            capture_output=True, 
+            text=True, 
+            check=True
+        )
+        return result
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Docker command failed: {e.stderr.strip()}")
+        raise
+
+
 # ===== Start a Service =====
 def start_service(service):
     action = SERVICES.get(service)
@@ -114,10 +137,10 @@ def start_service(service):
 
     container = action["container"]
     try:
-        subprocess.run(["docker", "start", container], check=True)
-        return f"Started container: {container}"
+        result = run_docker_command(["docker", "start", container])
+        logging.info(f"Started {container}: {result.stdout.strip()}")
     except subprocess.CalledProcessError as e:
-        return f"Error starting {container}: {e}", 500
+        logging.error(f"Failed to start {container}: {e.stderr.strip()}")
 
 
 # ===== Stop a Service =====
@@ -128,10 +151,10 @@ def stop_service(service):
 
     container = action["container"]
     try:
-        subprocess.run(["docker", "stop", container], check=True)
-        return f"Stopped container: {container}"
+        result = run_docker_command(["docker", "stop", container])
+        logging.info(f"Stopped {container}: {result.stdout.strip()}")
     except subprocess.CalledProcessError as e:
-        return f"Error stopping {container}: {e}", 500
+        logging.error(f"Failed to stop {container}: {e.stderr.strip()}")
 
 
 
@@ -141,7 +164,6 @@ def stop_service(service):
 
 # ===== Variables =====
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-JELLYSEER_DIR = r"D:\Scripts\Mathias\Jellyseerr"
 PASSWORD_HASH = "551cd4a09edfca75f017fedf4b4aefabd127d91072de3c3a1d2b6ffc511f8fa8"
 SERVER_IP = get_local_ip()
 status_cache = {}
@@ -155,10 +177,17 @@ SERVICES = {
     "plex": {"container": "plex", "port": 9002},
     "bazarr": {"container": "bazarr", "port": 9003},
     "tdarr": {"container": "tdarr", "port": 9007},
-    "synapse": {"container": "synapse", "port": 8008},
-    "nginx": {"container": "nginx", "port": 80}
 }
 
+
+# ===== Debugg =====
+print("Starting status thread...")
+logging.basicConfig(filename="service_debug.log", level=logging.DEBUG)
+logging.debug("Script started")
+try:
+    subprocess.run(["docker", "info"], capture_output=True, timeout=2, creationflags=subprocess.CREATE_NO_WINDOW)
+except Exception as e:
+    print("Docker not running:", e)
 
 # ===== FLASK / THREADING =====
 status_thread = Thread(target=update_status_cache, daemon=True)
