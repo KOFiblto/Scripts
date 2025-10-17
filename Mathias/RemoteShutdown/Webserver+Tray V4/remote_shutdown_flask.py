@@ -177,6 +177,7 @@ SERVICES = {
     "plex": {"container": "plex", "port": 9002},
     "bazarr": {"container": "bazarr", "port": 9003},
     "tdarr": {"container": "tdarr", "port": 9007},
+    "whisparr": {"container": "whisparr", "port": 9008},
 }
 
 
