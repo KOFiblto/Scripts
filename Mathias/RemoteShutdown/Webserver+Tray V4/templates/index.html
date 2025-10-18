@@ -260,9 +260,28 @@
                 width: 1.7rem;
                 height: 1.7rem;   
             }
+            .toggle-row {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(120px, 0.1fr));
+                justify-items: center;
+                align-items: center;
+                gap: 0.6rem 0.8rem;
+                margin-bottom: 0.5rem;
+            }
+            .switch-container {
+                width: 100px;
+            }
         }
     </style>
 </head>
+
+
+
+
+
+
+
+
 
 <body>
     <!-- ========================================= -->
@@ -292,6 +311,13 @@
         <div id="adminToggle" class="switch-container toggle-admin">
             <div class="switch-option left">User</div>
             <div class="switch-option right">Admin</div>
+            <div class="switch-handle"></div>
+        </div>
+
+        <!-- Whisparr Toggle (hidden until admin mode) -->
+        <div id="whisparrToggle" class="switch-container toggle-admin" style="display:none;">
+            <div class="switch-option left">Hide</div>
+            <div class="switch-option right">Show</div>
             <div class="switch-handle"></div>
         </div>
     </div>
@@ -376,32 +402,40 @@
             <div class="tile-desc" data-desc-de="Suchen" data-desc-en="Discover"></div>
         </a>
         -->
+        <a class="tile tile-service" id="tile-organizr" href="/organizr">
+            <button class="control-btn" onclick="toggleService(event, 'organizr')">
+                <img src="/img/play.webp" alt="Start Organizr">
+            </button>
+            <img src="/img/organizr.webp" alt="Organizr">
+            <div class="tile-name">Organizr</div>
+            <div class="tile-desc" data-desc-de="Dashboard" data-desc-en="Dashboard"></div>
+        </a>
         <a class="tile tile-service" id="tile-whisparr" href="/whisparr" style="display:none;">
-            <button class="control-btn" onclick="toggleService(event, 'whisper')">
+            <button class="control-btn" onclick="toggleService(event, 'whisparr')">
                 <img src="/img/play.webp" alt="Start Whisparr">
             </button>
-            <img src="/img/whisparr.webp" alt="Whisper">
+            <img src="/img/whisparr.webp" alt="whisparr">
             <div class="tile-name">Whisparr</div>
-            <div class="tile-desc" data-desc-de="Andere Video" data-desc-en="Other Videos"></div>
+            <div class="tile-desc" data-desc-de="Andere Filme" data-desc-en="Other Movies"></div>
         </a>
     </div>
 
 
     <div class="grid">
         <!-- ===== Shutdown Button (Red) ===== -->
-        <a class="tile" style="background: linear-gradient(135deg, #e57373, #d32f2f);" href="javascript:void(0);" onclick="shutdown()">
+        <a class="tile tile-admin-only" id="tile-startall" style="background: linear-gradient(135deg, #e57373, #d32f2f);" href="javascript:void(0);" onclick="shutdown()">
             <img src="/img/shutdown.webp" alt="Shutdown">
             <div class="tile-name">Shutdown</div>
             <div class="tile-desc"></div>
         </a>
         <!-- ===== Start all ===== -->
-        <a class="tile" style="background: linear-gradient(135deg, #80fb80, #50E650);" href="javascript:void(0);" onclick="startAll()">
+        <a class="tile tile-admin-only" id="tile-startall" style="background: linear-gradient(135deg, #80fb80, #50E650);" href="javascript:void(0);" onclick="startAll()">
             <img src="/img/play.webp" alt="Start">
             <div class="tile-name">Start All</div>
             <div class="tile-desc"></div>
         </a>
         <!-- ===== Stop all ===== -->
-        <a class="tile" style="background: linear-gradient(135deg, #e57373, #d32f2f);" href="javascript:void(0);" onclick="stopAll()">
+        <a class="tile tile-admin-only" id="tile-shutdown" style="background: linear-gradient(135deg, #e57373, #d32f2f);" href="javascript:void(0);" onclick="stopAll()">
             <img src="/img/pause.webp" alt="Stop">
             <div class="tile-name">Stop All</div>
             <div class="tile-desc"></div>
@@ -409,6 +443,11 @@
         
     </div>
     
+
+
+
+
+
     <script>
         /* ========================================= */
         /* ========= J A V A   S C R I P T ========= */
@@ -417,6 +456,7 @@
         let noobMode = false;
         let lang = "de";
         let adminPassword = null;
+        let isAdminVerified = false;
 
         const toggleSwitch = document.getElementById("toggleSwitch");   
         const langToggle = document.getElementById("langToggle");       
@@ -452,17 +492,43 @@
         });
 
 
+        // ===== Only Shows Whisparr Tile, Play/Pause Buttons and Shutdown in admin Mode =====
         function updateAdminTiles() {
-            const whisperTile = document.getElementById("tile-whisparr");
-            if (!whisperTile) return;
+            const whisparrTile = document.getElementById("tile-whisparr");
+            const whisparrSwitch = document.getElementById("whisparrToggle");
+            const controlButtons = document.querySelectorAll(".control-btn");
+            const adminTiles = document.querySelectorAll(".tile-admin-only");
 
-            // Show tile only if admin toggle is ON
+            if (!whisparrTile || !whisparrSwitch) return;
+
             if (adminToggle.classList.contains("on")) {
-                whisperTile.style.display = "flex";
+                // Show Whisparr toggle + admin-only tiles
+                whisparrSwitch.style.display = "inline-flex";
+                adminTiles.forEach(tile => tile.style.display = "flex");
+                controlButtons.forEach(btn => btn.style.display = "inline-flex");
             } else {
-                whisperTile.style.display = "none";
+                // Hide Whisparr toggle + tile
+                whisparrSwitch.style.display = "none";
+                whisparrTile.style.display = "none";
+                whisparrSwitch.classList.remove("on");
+
+                // Hide admin-only elements
+                adminTiles.forEach(tile => tile.style.display = "none");
+                controlButtons.forEach(btn => btn.style.display = "none");
             }
         }
+
+        // ===== Whisparr Toggle Switch =====
+        const whisparrToggle = document.getElementById("whisparrToggle");
+        whisparrToggle.addEventListener("click", () => {
+            whisparrToggle.classList.toggle("on");
+            const whisparrTile = document.getElementById("tile-whisparr");
+            if (whisparrToggle.classList.contains("on")) {
+                whisparrTile.style.display = "flex";
+            } else {
+                whisparrTile.style.display = "none";
+            }
+        });
 
 
         // ===== Tile Descriptions =====
@@ -483,36 +549,48 @@
 
         // ===== Admin toggle =====
         adminToggle.addEventListener("click", async () => {
-            if (!adminPassword) {
-                const autoAdmin = await loadWebsiteAdminTry();
-                if (!autoAdmin) {
-                    const pw = prompt("Enter password to unlock Admin actions:");
-                    if (!pw) return;
-        
-                    try {
-                        const res = await fetch('/verify-password', {
-                            method: 'POST',
-                            headers: {'Content-Type':'application/json'},
-                            body: JSON.stringify({password: pw})
-                        });
-                        const text = await res.text();
-                        if (text === "OK") {
-                            adminPassword = pw;
-                            adminToggle.classList.add("on");
-                        } else {
-                            alert("Incorrect password!");
-                        }
-                    } catch (e) {
-                        alert("Error: " + e);
+            const isOn = adminToggle.classList.toggle("on");
+
+            if (isOn) {
+                // If already verified this session, no need to re-enter password
+                if (isAdminVerified) {
+                    updateAdminTiles();
+                    return;
+                }
+
+                // Ask for password
+                const enteredPassword = prompt("Enter admin password:");
+                if (!enteredPassword) {
+                    adminToggle.classList.remove("on");
+                    return;
+                }
+
+                // Send password to backend for verification
+                try {
+                    const res = await fetch("/verify-password", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ password: enteredPassword })
+                    });
+                    const text = await res.text();
+
+                    if (text === "OK") {
+                        adminPassword = enteredPassword;
+                        isAdminVerified = true;
+                        updateAdminTiles();
+                    } else {
+                        alert("Wrong password.");
+                        adminToggle.classList.remove("on");
                     }
-                } else {
-                    adminToggle.classList.add("on");
+                } catch (err) {
+                    console.error("Verification error:", err);
+                    alert("Error verifying password.");
+                    adminToggle.classList.remove("on");
                 }
             } else {
-                adminPassword = null;
-                adminToggle.classList.remove("on");
+                // Turning admin mode off
+                updateAdminTiles();
             }
-            updateAdminTiles();
         });
         
 
@@ -530,6 +608,7 @@
                     const text = await res.text();
                     if (text === "OK") {
                         adminPassword = pw;
+                        isAdminVerified = true;      // <-- add this
                         adminToggle.classList.add("on");
                         return true;
                     }
@@ -538,9 +617,11 @@
                 }
             }
             adminPassword = null;
+            isAdminVerified = false;            // <-- also here
             adminToggle.classList.remove("on");
             return false;
         }
+
 
 
         // ===== Fetch Service Status & Update Tiles =====
@@ -607,8 +688,8 @@
 
         // ===== Shutdown =====
         function shutdown() {
-            if (!adminPassword) {
-                alert("Switch to Admin and enter password first!");
+            if (!adminToggle.classList.contains("on")) {
+                alert("Switch to Admin mode first!");
                 return;
             }
 
@@ -625,11 +706,10 @@
             .catch(e => { actionText.textContent = 'Error: ' + e; });
         }
 
-           
         // ===== Start All Services =====
         function startAll() {
-            if (!adminPassword) {
-                alert("Switch to Admin and enter password first!");
+            if (!adminToggle.classList.contains("on")) {
+                alert("Switch to Admin mode first!");
                 return;
             }
 
@@ -646,11 +726,10 @@
             .catch(e => actionText.textContent = "Error: " + e);
         }
 
-        
         // ===== Stop All Services =====
         function stopAll() {
-            if (!adminPassword) {
-                alert("Switch to Admin and enter password first!");
+            if (!adminToggle.classList.contains("on")) {
+                alert("Switch to Admin mode first!");
                 return;
             }
 
@@ -666,6 +745,7 @@
             })
             .catch(e => actionText.textContent = "Error: " + e);
         }
+
 
     </script>
 </body>

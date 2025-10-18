@@ -1,21 +1,21 @@
 ## --- R E L E A S E   V E R S I O N  ----
 
-from waitress import serve # type: ignore
-from remote_shutdown_flask import app
+# from waitress import serve # type: ignore
+# from remote_shutdown_flask import app
 
-if __name__ == "__main__":
-    print("Starting Flask server...")
-    serve(app, host="0.0.0.0", port=5000, threads=2)
+# if __name__ == "__main__":
+#     print("Starting Flask server...")
+#     serve(app, host="0.0.0.0", port=5000, threads=2)
 
 
 
 
 ## --- D E V E L O P M E N T   V E R S I O N  ----
 
-# from remote_shutdown_flask import app
+from remote_shutdown_flask import app
 
-# if __name__ == "__main__":
-#     app.run(host="0.0.0.0", port=5000, debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
 
 
