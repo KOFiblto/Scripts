@@ -26,3 +26,5 @@ obj/
 # Others
 *.log
 *.pid
+
+Mathias/_Antigravity/Manager/data/*
