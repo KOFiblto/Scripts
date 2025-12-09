@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+        <header class="glass-panel">
+            <div class="logo">
+                <i data-lucide="layout-grid"></i>
+                <h1>Dashboard</h1>
+            </div>
+            <div class="controls">
+                <div class="control-group">
+                    <label class="switch">
+                        <input type="checkbox" id="mode-switch">
+                        <span class="slider round"></span>
+                    </label>
+                    <span id="mode-label">Local</span>
+                </div>
+                <div class="control-group">
+                    <label class="switch">
+                        <input type="checkbox" id="desc-switch">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Details</span>
+                </div>
+                <div class="control-group">
+                    <label class="switch">
+                        <input type="checkbox" id="glass-switch">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Glass</span>
+                </div>
+                <div class="control-group">
+                    <button id="admin-btn" class="btn-ghost">
+                        <i data-lucide="lock"></i>
+                        <span id="admin-label">Visitor</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main id="services-grid" class="grid-container">
+            <!-- Services will be injected here -->
+            <div class="loading-spinner">
+                <i data-lucide="loader-2" class="spin"></i>
+            </div>
+        </main>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Admin Access</h2>
+                <button id="close-modal" class="btn-icon"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="password" id="admin-password" placeholder="Enter Password" class="input-glass">
+                <button id="login-btn" class="btn-primary">Unlock</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,8 +1,0 @@
-Windows Registry Editor Version 5.00
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.mkv\shell\OpenWithAC3Converter]
-@="Open with AC3 Converter"
-"Icon"="C:\\___NZB\\scripts\\Icon.ico"
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.mkv\shell\OpenWithAC3Converter\command]
-@="\"C:\\___NZB\\scripts\\Convert_Audio - GUI.exe\" \"%1\""

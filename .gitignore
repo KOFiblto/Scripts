@@ -26,3 +26,7 @@ obj/
 # Others
 *.log
 *.pid
+*.spec
+
+# ENV
+.env
