@@ -26,5 +26,7 @@ obj/
 # Others
 *.log
 *.pid
+*.spec
 
-Mathias/_Antigravity/Manager/data/*
+# ENV
+.env
