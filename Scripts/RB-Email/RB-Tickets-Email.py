@@ -5,16 +5,28 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from time import sleep
+import os
+from dotenv import load_dotenv
 
 #Email
 from email.message import EmailMessage
 import ssl
 import smtplib
 
+# Load .env file
+script_dir = os.path.dirname(os.path.abspath(__file__))
+dotenv_path = os.path.join(script_dir, '..', '..', '.env')
+load_dotenv(dotenv_path=dotenv_path)
+
+#######################################################################################
+#                                                                                     #
+#        This Script checks if Tickets are available on the Red Bull Ring Website     #
+#                and sends an Email if they are available.                            #
+#                                                                                     #
+#######################################################################################
+
 # Intervall < 0 -> Exit after one Check
-#########################################################
 intervall = 60 # Minuten
-#########################################################
 
 
 # # # # # # # # # # # 
@@ -26,16 +38,16 @@ AllowElsifChecks = False
 
 
 #XPATH of Tickets
-ticketXPATH = "//*[@id='nr25040991']"
+ticketXPATH = "//*[@id='products']/div[2]/div[3]/div[2]/div[1]/div[1]"
 soldOutXPATH = "//*[@id='products']/div[3]/div[1]"
 
 #Website
-URL = "https://tickets.redbullring.com/de/f1/f1-grand-prix-oesterreich-2025/tickets.html"
+URL = "https://tickets.redbullring.com/de/f1/f1-grand-prix-oesterreich/tickets.html"
 
 #Email info
-email_receiver = 'mathias.kornschober08@gmail.com'
-email_sender = 'F1Tickets.Redbullring@gmail.com'
-email_password = 'fuit asfe qfpz qmqh'  
+email_receiver = os.environ.get("REDBULLF1_EMAIL_RECEIVER")
+email_sender = os.environ.get("REDBULLF1_EMAIL_SENDER")
+email_password = os.environ.get("REDBULLF1_EMAIL_PASSWORD")  
 
 
 
@@ -54,11 +66,14 @@ def initBrowser(URL):
     title = driver.title
     sleep(2)
     return driver
-def findCoordinate(ticketXPATH, driver):
-    ticket = driver.find_element(By.XPATH, ticketXPATH)
-    ticket_size = ticket.size
-    yTickets = ticket_size['height'] #Gets Y-Coordinate of the Tickets
-    return yTickets
+def findCoordinate(xpath, driver):
+    # Use 'xpath' instead of 'ticketXPATH' for clarity within the function
+    element = driver.find_element(By.XPATH, xpath)
+    # Get the Y-coordinate (distance from the top of the page)
+    yCoordinate = element.location['y']
+    # You can optionally return the element itself if needed later, but Y-coordinate is what you need
+    return yCoordinate
+
 def quitBrowser(driver):
     #Quit Broswer
     sleep(1)
