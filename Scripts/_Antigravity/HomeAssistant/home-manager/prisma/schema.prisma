@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Floorplan {
+  id        String   @id @default(cuid())
+  name      String
+  imagePath String
+  width     Float
+  height    Float
+  createdAt DateTime @default(now())
+  devices   Device[]
+}
+
+model Device {
+  id          String   @id @default(cuid())
+  floorplanId String
+  floorplan   Floorplan @relation(fields: [floorplanId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  type        String
+  protocol    String
+  pinCode     String?
+  qrCodePath  String?
+  xPos        Float
+  yPos        Float
+  scale       Float    @default(1.0)
+  createdAt   DateTime @default(now())
+}
