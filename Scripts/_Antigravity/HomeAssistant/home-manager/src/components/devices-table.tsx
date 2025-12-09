@@ -60,8 +60,8 @@ function DeviceRow({ device }: { device: any }) {
             <TableCell>
                 <div className="relative w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border">
                     <IconImage
-                        type={device.type}
-                        protocol={device.protocol}
+                        type="device"
+                        value={device.type}
                         className="p-1"
                     />
                 </div>

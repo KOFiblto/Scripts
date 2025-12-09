@@ -34,45 +34,32 @@ export function FloorplanViewer({ floorplan, devices }: FloorplanViewerProps) {
     }
 
     return (
-        src = { selectedDevice.qrCodePath }
-                                            alt = "QR Code"
-    fill
-    className = "object-contain"
-        />
-                                    </div >
-                                </div >
-                            </div >
-                        )
-}
-
-{
-    selectedDevice?.pinCode && (
-        <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-muted-foreground">
-                <Lock className="w-3 h-3" />
-                <span className="text-xs font-bold uppercase tracking-wider">PIN Code</span>
-            </Label>
-            <div className="flex items-center gap-2">
-                <div className="font-mono text-lg bg-muted p-2 px-4 rounded border flex-1 text-center tracking-widest">
-                    {showPin ? selectedDevice.pinCode : "••••••••"}
+        <div className="h-full flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center bg-card">
+                <h1 className="text-2xl font-bold">{floorplan.name}</h1>
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center space-x-2">
+                        <Label htmlFor="lock-mode">{isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}</Label>
+                        <Switch id="lock-mode" checked={isLocked} onCheckedChange={setIsLocked} />
+                    </div>
                 </div>
-                <Button variant="outline" size="icon" onClick={() => setShowPin(!showPin)}>
-                    {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
+            </div>
+            <div className="flex-1 overflow-hidden relative">
+                <MapEditor
+                    floorplan={floorplan}
+                    devices={devices}
+                    onDeviceClick={setSelectedDevice}
+                    isLocked={isLocked}
+                />
+
+                {selectedDevice && (
+                    <DeviceEditDialog
+                        device={selectedDevice}
+                        open={editDialogOpen}
+                        onOpenChange={handleOpenChange}
+                    />
+                )}
             </div>
         </div>
-    )
-}
-                    </div >
-
-    <SheetFooter className="mt-6">
-        <Button variant="destructive" className="w-full gap-2" onClick={handleDelete}>
-            <Trash2 className="w-4 h-4" />
-            Delete Device
-        </Button>
-    </SheetFooter>
-                </SheetContent >
-            </Sheet >
-        </>
     )
 }

@@ -198,7 +198,7 @@ const DeviceNode = ({ device, floorplanWidth, floorplanHeight, onDragEnd, onTran
                     ref={trRef}
                     boundBoxFunc={(oldBox, newBox) => {
                         // limit resize if needed
-                        if (newBox.width < 50 || newBox.height < 50) {
+                        if (newBox.width < 20 || newBox.height < 20) {
                             return oldBox;
                         }
                         return newBox;
@@ -292,9 +292,9 @@ export function MapEditor({ floorplan, devices, onDeviceClick, isLocked = false 
         // SO: We just normalize by floorplan width/height.
 
         // Convert stage coordinates back to percentage
-        if (!dimensions.width || !dimensions.height) return
-        const xPercent = (x / dimensions.width) * 100
-        const yPercent = (y / dimensions.height) * 100
+        if (!floorplan.width || !floorplan.height) return
+        const xPercent = (x / floorplan.width) * 100
+        const yPercent = (y / floorplan.height) * 100
 
         // Optimistically update
         setLocalDevices(prev => prev.map(d => d.id === id ? { ...d, xPos: xPercent, yPos: yPercent } : d))
@@ -364,16 +364,16 @@ export function MapEditor({ floorplan, devices, onDeviceClick, isLocked = false 
                             {floorplan.imagePath && (
                                 <KonvaImage
                                     image={image}
-                                    width={dimensions.width}
-                                    height={dimensions.height}
+                                    width={floorplan.width}
+                                    height={floorplan.height}
                                 />
                             )}
                             {localDevices.map(device => (
                                 <DeviceNode
                                     key={device.id}
                                     device={device}
-                                    floorplanWidth={dimensions.width}
-                                    floorplanHeight={dimensions.height}
+                                    floorplanWidth={floorplan.width}
+                                    floorplanHeight={floorplan.height}
                                     onDragEnd={handleDragEnd}
                                     onTransformEnd={handleTransformEnd}
                                     onClick={(d: Device) => {
