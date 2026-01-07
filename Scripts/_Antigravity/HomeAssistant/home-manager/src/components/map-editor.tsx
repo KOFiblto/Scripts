@@ -370,7 +370,7 @@ export function MapEditor({ floorplan, devices, onDeviceClick, isLocked = false 
                             )}
                             {localDevices.map(device => (
                                 <DeviceNode
-                                    key={device.id}
+                                    key={`${device.id}-${device.type}-${device.protocol}`}
                                     device={device}
                                     floorplanWidth={floorplan.width}
                                     floorplanHeight={floorplan.height}
