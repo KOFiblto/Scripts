@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  home-manager:
+    container_name: home-manager
+    build:
+      context: ../home-manager
+      dockerfile: ../docker_img/Dockerfile
+    environment:
+      - DATABASE_URL=file:./dev.db
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist the sqlite database. 
+      # Note: If the DB is expected to be in /app/prisma/dev.db (default for prisma with relative path), 
+      # we should mount the directory or the file. 
+      # Since we copied prisma folder in the dockerfile, we can mount a volume to it.
+      - home-manager-data:/app/prisma
+    restart: unless-stopped
+
+volumes:
+  home-manager-data:
