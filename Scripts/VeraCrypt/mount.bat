@@ -33,6 +33,14 @@ set "SafePIM[3]=0"
 
 :MENU
 cls
+
+:: Directly go to Mount if only one Safe
+if "%Count%"=="1" (
+    set "VOLUME=!SafePath[1]!"
+    set "PIM=!SafePIM[1]!"
+    goto MOUNT
+)
+
 echo Select Safe to Mount:
 echo.
 :: Loops from 1 to Count to generate the menu at Runtime
