@@ -55,7 +55,6 @@ def monitor(continuous):
     is_active = get_state()
     
     if continuous:
-        send_notification("Script started. Continuous monitoring active.")
         while True:
             new_state = check_status(is_active)
             if new_state != is_active:
