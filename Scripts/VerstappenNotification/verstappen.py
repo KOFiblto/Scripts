@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 
 TIMING_URL = "https://livetiming.azurewebsites.net/event=50?config=w3"
-TOPIC = "max_verstappen_24h_v82"
+TOPIC = "ihr_gewaehltes_topic"
 CAR_NUMBER = "3"
 DRIVER_NAME = "Verstappen"
 STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "state.txt")
@@ -63,8 +63,7 @@ def monitor(continuous):
             time.sleep(30)
     else:
         new_state = check_status(is_active)
-        if new_state != is_active:
-            save_state(new_state)
+        save_state(new_state)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
