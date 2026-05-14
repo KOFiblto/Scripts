@@ -1,8 +1,10 @@
-name: Verstappen Monitor
+name: Race Monitor
 on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -16,3 +18,9 @@ jobs:
         run: pip install beautifulsoup4 requests
       - name: Run script
         run: python Scripts/VerstappenNotification/verstappen.py
+      - name: Save state
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add Scripts/VerstappenNotification/state.txt
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: save tracking state" && git push)
