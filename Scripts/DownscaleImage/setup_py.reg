@@ -15,19 +15,19 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell\MS1]
 @="1 MP"
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell\MS1\command]
-@="pythonw.exe \"D:\\Scripts\\Scripts\\DownscaleImage\\downscale.py\" \"%1\" 1"
+@="cmd /c python.exe \"D:\\Scripts\\Scripts\\DownscaleImage\\downscale.py\" \"%1\" 1 || pause"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell\MS2]
 @="2 MP"
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell\MS2\command]
-@="pythonw.exe \"D:\\Scripts\\Scripts\\DownscaleImage\\downscale.py\" \"%1\" 2"
+@="cmd /c python.exe \"D:\\Scripts\\Scripts\\DownscaleImage\\downscale.py\" \"%1\" 2 || pause"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell\MS3]
 @="3 MP"
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell\MS3\command]
-@="pythonw.exe \"D:\\Scripts\\Scripts\\DownscaleImage\\downscale.py\" \"%1\" 3"
+@="cmd /c python.exe \"D:\\Scripts\\Scripts\\DownscaleImage\\downscale.py\" \"%1\" 3 || pause"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell\MS4]
 @="4 MP"
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell\MS4\command]
-@="pythonw.exe \"D:\\Scripts\\Scripts\\DownscaleImage\\downscale.py\" \"%1\" 4"
+@="cmd /c python.exe \"D:\\Scripts\\Scripts\\DownscaleImage\\downscale.py\" \"%1\" 4 || pause"
