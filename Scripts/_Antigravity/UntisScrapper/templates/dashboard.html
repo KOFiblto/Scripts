@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+
+    {% if not active_profile %}
+        <!-- Empty State: No Profile -->
+        <div class="border border-github-border bg-github-card rounded-md p-10 text-center max-w-2xl mx-auto my-12">
+            <div class="w-16 h-16 bg-[#21262d] border border-github-border rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-users text-github-muted text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-github-header mb-2 font-mono">No Profile Configured</h2>
+            <p class="text-github-muted text-sm mb-6 max-w-md mx-auto">
+                Welcome to the WebUntis Analytics Dashboard. To view your attendance statistics, please create or select a profile first.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{{ url_for('profiles') }}" class="px-4 py-2 bg-github-green hover:bg-github-greenHover text-github-header font-semibold rounded-md text-sm transition duration-150 font-mono">
+                    <i class="fa-solid fa-plus mr-1"></i>Create WebUntis Profile
+                </a>
+            </div>
+        </div>
+    {% else %}
+        
+        <!-- Header Panel with Last Sync -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between border border-github-border bg-github-card p-4 rounded-md gap-4">
+            <div>
+                <h1 class="text-lg font-bold text-github-header font-mono">
+                    Dashboard &mdash; <span class="text-github-muted font-normal">{{ active_profile.name }}</span>
+                </h1>
+                <p class="text-xs text-github-muted font-mono mt-1">
+                    Last sync: 
+                    {% if active_profile.last_sync %}
+                        <span class="text-github-header font-semibold">{{ active_profile.last_sync|replace("T", " ")|slice(0,19) }}</span>
+                    {% else %}
+                        <span class="text-github-red font-semibold">Never synced</span>
+                    {% endif %}
+                    {% if active_profile.is_mock %}
+                        <span class="ml-2 bg-yellow-950/40 text-yellow-500 border border-yellow-800/50 px-1.5 py-0.5 rounded text-[10px] font-bold">MOCK DATA ENABLED</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="flex items-center gap-2">
+                <form action="{{ url_for('sync_page') }}" method="POST" class="inline">
+                    <input type="hidden" name="action" value="sync">
+                    <button type="submit" class="px-3 py-1.5 bg-[#21262d] hover:bg-[#30363d] border border-github-border rounded-md text-xs font-semibold font-mono text-github-header transition duration-150">
+                        <i class="fa-solid fa-rotate mr-1"></i>Sync Data
+                    </button>
+                </form>
+                <a href="{{ url_for('sync_page') }}" class="px-3 py-1.5 bg-github-bg border border-github-border hover:border-github-muted rounded-md text-xs font-semibold font-mono text-github-muted hover:text-github-header transition duration-150">
+                    <i class="fa-solid fa-gear mr-1"></i>Settings
+                </a>
+            </div>
+        </div>
+
+        <!-- Dashboard Loading / No Data State -->
+        <div id="dashboard-loading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-github-green mb-4"></div>
+            <p class="text-sm font-mono text-github-muted">Analyzing local database cache...</p>
+        </div>
+
+        <div id="dashboard-empty" class="hidden border border-github-border bg-github-card rounded-md p-10 text-center max-w-2xl mx-auto my-6">
+            <div class="w-16 h-16 bg-[#21262d] border border-github-border rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-database text-github-muted text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-github-header mb-2 font-mono">No Cached Data for Profile</h2>
+            <p class="text-github-muted text-sm mb-6 max-w-md mx-auto">
+                We couldn't find any timetable or absence data cached for <strong>{{ active_profile.name }}</strong>. Please sync with WebUntis or load mock data.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <form action="{{ url_for('sync_page') }}" method="POST" class="inline">
+                    <input type="hidden" name="action" value="sync">
+                    <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-github-green hover:bg-github-greenHover text-github-header font-semibold rounded-md text-sm transition duration-150 font-mono">
+                        <i class="fa-solid fa-rotate mr-1"></i>Sync with WebUntis API
+                    </button>
+                </form>
+                <form action="{{ url_for('sync_page') }}" method="POST" class="inline">
+                    <input type="hidden" name="action" value="mock">
+                    <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-[#21262d] hover:bg-[#30363d] border border-github-border text-github-header font-semibold rounded-md text-sm transition duration-150 font-mono">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Generate Mock Data
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard Content Grid -->
+        <div id="dashboard-content" class="hidden space-y-6">
+            
+            <!-- Row 1: KPI Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <!-- KPI 1: Total Hours -->
+                <div class="border border-github-border bg-github-card p-4 rounded-md flex flex-col justify-between">
+                    <div class="text-xs font-mono text-github-muted uppercase tracking-wider mb-2">Total Absence Counter</div>
+                    <div class="flex items-baseline space-x-2">
+                        <span id="stat-total-hours" class="text-4xl font-extrabold text-github-header font-mono">0.0</span>
+                        <span class="text-github-muted text-sm font-mono">school hours</span>
+                    </div>
+                    <div class="text-[10px] text-github-muted font-mono mt-2">
+                        <i class="fa-solid fa-circle-info mr-1 text-github-green"></i>Based on 50-minute lesson units.
+                    </div>
+                </div>
+                
+                <!-- KPI 2: Status Box Grid -->
+                <div class="border border-github-border bg-github-card p-4 rounded-md flex flex-col justify-between">
+                    <div class="text-xs font-mono text-github-muted uppercase tracking-wider mb-2">Status Metrics</div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="border border-emerald-900/50 bg-emerald-950/10 p-2 rounded-md">
+                            <div class="text-[10px] font-mono text-emerald-400">Excused</div>
+                            <div id="stat-excused-hours" class="text-base font-bold text-emerald-400 font-mono mt-1">0.0h</div>
+                        </div>
+                        <div class="border border-red-900/50 bg-red-950/10 p-2 rounded-md">
+                            <div class="text-[10px] font-mono text-red-400">Unexcused</div>
+                            <div id="stat-unexcused-hours" class="text-base font-bold text-red-400 font-mono mt-1">0.0h</div>
+                        </div>
+                        <div class="border border-yellow-900/50 bg-yellow-950/10 p-2 rounded-md">
+                            <div class="text-[10px] font-mono text-yellow-400">Open</div>
+                            <div id="stat-open-hours" class="text-base font-bold text-yellow-400 font-mono mt-1">0.0h</div>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-github-muted font-mono mt-2 flex justify-between">
+                        <span>Entschuldigt</span>
+                        <span>Nicht ent.</span>
+                        <span>Offen</span>
+                    </div>
+                </div>
+                
+                <!-- KPI 3: Granularity -->
+                <div class="border border-github-border bg-github-card p-4 rounded-md flex flex-col justify-between">
+                    <div class="text-xs font-mono text-github-muted uppercase tracking-wider mb-2">Granularity</div>
+                    <div class="grid grid-cols-2 gap-2 text-center">
+                        <div class="border border-github-border bg-[#21262d] p-2 rounded-md">
+                            <div class="text-[10px] font-mono text-github-muted">Late Arrivals</div>
+                            <div id="stat-late-arrivals" class="text-base font-bold text-github-header font-mono mt-1">0</div>
+                            <div class="text-[9px] text-github-muted font-mono mt-0.5">Zuspätkommen</div>
+                        </div>
+                        <div class="border border-github-border bg-[#21262d] p-2 rounded-md">
+                            <div class="text-[10px] font-mono text-github-muted">Full Hours</div>
+                            <div id="stat-full-hours" class="text-base font-bold text-github-header font-mono mt-1">0</div>
+                            <div class="text-[9px] text-github-muted font-mono mt-0.5">Fehlstunden</div>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-github-muted font-mono mt-2">
+                        <i class="fa-solid fa-circle-info mr-1 text-github-muted"></i>Late = absence less than 50 mins.
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Heatmap Section -->
+            <div class="border border-github-border bg-github-card rounded-md p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-bold text-github-header font-mono">Absence Density Heatmap</h3>
+                    <span class="text-xs text-github-muted font-mono">Past 365 Days</span>
+                </div>
+                
+                <div class="flex">
+                    <!-- Weekday labels -->
+                    <div class="flex flex-col justify-between text-[9px] text-github-muted font-mono pr-2 pb-6 pt-1 select-none">
+                        <span>Mon</span>
+                        <span>Wed</span>
+                        <span>Fri</span>
+                    </div>
+                    
+                    <div class="flex-grow overflow-x-auto">
+                        <!-- Heatmap grid container -->
+                        <div id="heatmap-grid" class="flex gap-[3px] pb-3 min-w-[700px]">
+                            <!-- Generated in JS -->
+                        </div>
+                        
+                        <!-- Month labels below -->
+                        <div id="heatmap-month-labels" class="flex text-[9px] text-github-muted font-mono mt-1 min-w-[700px] select-none">
+                            <!-- Generated in JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-end text-[10px] text-github-muted font-mono mt-2 gap-1.5 select-none">
+                    <span>Less</span>
+                    <div class="w-2.5 h-2.5 rounded-[2px] bg-[#161b22] border border-[#21262d]"></div>
+                    <div class="w-2.5 h-2.5 rounded-[2px] bg-[#0e4429]"></div>
+                    <div class="w-2.5 h-2.5 rounded-[2px] bg-[#006d32]"></div>
+                    <div class="w-2.5 h-2.5 rounded-[2px] bg-[#26a641]"></div>
+                    <div class="w-2.5 h-2.5 rounded-[2px] bg-[#39d353]"></div>
+                    <span>More</span>
+                </div>
+            </div>
+            
+            <!-- Day & Period (Hour) Density Map Section -->
+            <div class="border border-github-border bg-github-card rounded-md p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-bold text-github-header font-mono">Absence Density by Day & Hour (Period)</h3>
+                    <span class="text-xs text-github-muted font-mono">Weekly School Grid</span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <div class="min-w-[650px] space-y-2">
+                        <!-- Column header for periods -->
+                        <div class="flex items-center pl-16">
+                            <div class="grid grid-cols-10 gap-2 flex-grow text-center text-[10px] text-github-muted font-mono">
+                                <div>
+                                    <div class="font-bold text-github-header">P1</div>
+                                    <div class="text-[9px]">07:45</div>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-github-header">P2</div>
+                                    <div class="text-[9px]">08:35</div>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-github-header">P3</div>
+                                    <div class="text-[9px]">09:40</div>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-github-header">P4</div>
+                                    <div class="text-[9px]">10:30</div>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-github-header">P5</div>
+                                    <div class="text-[9px]">11:30</div>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-github-header">P6</div>
+                                    <div class="text-[9px]">12:20</div>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-github-header">P7</div>
+                                    <div class="text-[9px]">13:15</div>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-github-header">P8</div>
+                                    <div class="text-[9px]">14:05</div>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-github-header">P9</div>
+                                    <div class="text-[9px]">15:15</div>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-github-header">P10</div>
+                                    <div class="text-[9px]">16:05</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Grid rows (populated dynamically by JS) -->
+                        <div id="density-grid-rows" class="space-y-2">
+                            <!-- JS will generate 5 rows (Mon to Fri) -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-end text-[10px] text-github-muted font-mono mt-4 gap-1.5 select-none">
+                    <span>Less Absences</span>
+                    <div class="w-3 h-3 rounded-[2px] bg-[#161b22] border border-[#21262d]"></div>
+                    <div class="w-3 h-3 rounded-[2px] bg-[#0e4429]"></div>
+                    <div class="w-3 h-3 rounded-[2px] bg-[#006d32]"></div>
+                    <div class="w-3 h-3 rounded-[2px] bg-[#26a641]"></div>
+                    <div class="w-3 h-3 rounded-[2px] bg-[#39d353]"></div>
+                    <span>More Absences</span>
+                </div>
+            </div>
+            
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                
+                <!-- Subject Breakdown -->
+                <div class="border border-github-border bg-github-card p-4 rounded-md flex flex-col">
+                    <h3 class="text-sm font-bold text-github-header font-mono mb-4">Absences by Subject</h3>
+                    <div class="min-h-[200px] relative flex items-center justify-center mb-4">
+                        <canvas id="chart-subjects"></canvas>
+                        <div id="chart-subjects-empty" class="hidden text-xs text-github-muted font-mono">No subject data.</div>
+                    </div>
+                    <!-- Table showing both clock time and 50min periods -->
+                    <div class="border-t border-github-border pt-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs font-mono">
+                                <thead class="bg-github-bg text-github-muted uppercase text-[9px] tracking-wider border-b border-github-border select-none">
+                                    <tr>
+                                        <th class="px-2 py-1.5">Subject</th>
+                                        <th class="px-2 py-1.5 text-right">Clock Time</th>
+                                        <th class="px-2 py-1.5 text-right">Periods (/50min)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subject-table-body" class="divide-y divide-github-border">
+                                    <!-- Rendered in JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Weekday Distribution -->
+                <div class="border border-github-border bg-github-card p-4 rounded-md flex flex-col">
+                    <h3 class="text-sm font-bold text-github-header font-mono mb-4">Absences by Weekday</h3>
+                    <div class="flex-grow min-h-[250px] relative flex items-center justify-center">
+                        <canvas id="chart-weekdays"></canvas>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Absences Table List -->
+            <div class="border border-github-border bg-github-card rounded-md overflow-hidden">
+                <div class="px-4 py-3 bg-[#161b22] border-b border-github-border flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-github-header font-mono">Sync Logs & Absence Records</h3>
+                    <span id="absence-count" class="text-xs bg-[#21262d] border border-github-border text-github-muted px-2 py-0.5 rounded-full font-mono">0 absences</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs font-mono">
+                        <thead class="bg-github-bg text-github-muted uppercase text-[10px] tracking-wider border-b border-github-border select-none">
+                            <tr>
+                                <th class="px-4 py-3">Date</th>
+                                <th class="px-4 py-3">Time</th>
+                                <th class="px-4 py-3">Periods</th>
+                                <th class="px-4 py-3">Subject</th>
+                                <th class="px-4 py-3">Teacher</th>
+                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3">Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="absence-table-body" class="divide-y divide-github-border">
+                            <!-- Generated in JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="absence-table-empty" class="hidden py-8 text-center text-sm font-mono text-github-muted">
+                    No absences found in cache.
+                </div>
+            </div>
+            
+        </div>
+        
+    {% endif %}
+
+</div>
+
+<!-- ChartJS Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Custom Dashboard Logic -->
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

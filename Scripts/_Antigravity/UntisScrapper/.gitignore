@@ -1,0 +1,27 @@
+# Credentials and Environment
+.env
+config.json
+secrets.json
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Python Virtual Environment and Dependencies
+.venv/
+venv/
+ENV/
+env/
+
+# Python Caches and Outputs
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Operating System Files
+.DS_Store
+Thumbs.db

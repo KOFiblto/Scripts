@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6 font-mono text-xs">
+
+    <h2 class="text-base font-bold text-github-header mb-4">
+        <i class="fa-solid fa-rotate text-github-muted mr-2"></i>Sync Settings & Configuration
+    </h2>
+
+    {% if not active_profile %}
+        <!-- Warning: No active profile -->
+        <div class="border border-yellow-900/40 bg-yellow-950/20 p-4 rounded-md text-yellow-400">
+            <h3 class="font-bold text-sm mb-1"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>No Active Profile Selected</h3>
+            <p class="mb-4">
+                You must select or create a WebUntis profile before you can sync data.
+            </p>
+            <a href="{{ url_for('profiles') }}" class="inline-block px-3 py-1.5 bg-github-yellow text-github-bg font-bold rounded hover:bg-yellow-400 transition">
+                Go to Profile Manager
+            </a>
+        </div>
+    {% else %}
+        
+        <!-- Active Profile Summary -->
+        <div class="border border-github-border bg-github-card p-4 rounded-md">
+            <h3 class="text-sm font-bold text-github-header mb-3">Active Target Profile</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-github-muted border-b border-github-border/40 pb-4 mb-4">
+                <div>
+                    <div class="text-[10px] text-github-muted uppercase">Profile Name</div>
+                    <div class="text-github-header font-bold text-sm mt-0.5">{{ active_profile.name }}</div>
+                </div>
+                <div>
+                    <div class="text-[10px] text-github-muted uppercase">WebUntis Endpoint</div>
+                    <div class="text-github-header mt-0.5">{{ active_profile.server }} (School: {{ active_profile.school }})</div>
+                </div>
+                <div>
+                    <div class="text-[10px] text-github-muted uppercase">Connected User</div>
+                    <div class="text-github-header mt-0.5">{{ active_profile.username }}</div>
+                </div>
+                <div>
+                    <div class="text-[10px] text-github-muted uppercase">Data Cache Type</div>
+                    <div class="text-github-header mt-0.5">
+                        {% if active_profile.is_mock %}
+                            <span class="text-yellow-500 font-bold">Mock Synthetic Data</span>
+                        {% elif active_profile.last_sync %}
+                            <span class="text-github-green font-bold">Official WebUntis Cache</span>
+                        {% else %}
+                            <span class="text-github-red font-bold">Uncached / Empty</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between text-[10px]">
+                <span>Last Synchronized: 
+                    {% if active_profile.last_sync %}
+                        <span class="text-github-header font-bold">{{ active_profile.last_sync|replace("T", " ")|slice(0,19) }}</span>
+                    {% else %}
+                        <span class="text-github-red font-bold">Never</span>
+                    {% endif %}
+                </span>
+                <a href="{{ url_for('profiles') }}" class="text-github-muted hover:text-github-header underline">Switch profile</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- WebUntis Sync Option -->
+            <div class="border border-github-border bg-github-card p-4 rounded-md flex flex-col justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-github-header mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-cloud-arrow-down text-github-green"></i>
+                        WebUntis Live Sync
+                    </h3>
+                    <p class="text-github-muted leading-relaxed mb-4">
+                        Connects directly to the official WebUntis JSON-RPC API to pull your timetable lessons and absence logs for the current school year.
+                    </p>
+                    <div class="bg-github-bg border border-github-border/60 p-2.5 rounded-md text-[10px] text-github-muted mb-4 space-y-1">
+                        <div class="font-bold text-github-header"><i class="fa-solid fa-shield-halved mr-1"></i>Security Information:</div>
+                        <div>Credentials are stored locally in your SQLite database. Your password is sent directly to the school server via standard HTTPS requests. No third-party servers are involved.</div>
+                    </div>
+                </div>
+                <form action="{{ url_for('sync_page') }}" method="POST" class="pt-2">
+                    <input type="hidden" name="action" value="sync">
+                    <button type="submit" class="w-full py-2 bg-github-green hover:bg-github-greenHover text-github-header font-bold rounded-md transition duration-150">
+                        <i class="fa-solid fa-rotate mr-1.5 animate-spin-slow"></i>Sync Live Data
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Mock Data Option -->
+            <div class="border border-github-border bg-github-card p-4 rounded-md flex flex-col justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-github-header mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i>
+                        Populate Mock Data
+                    </h3>
+                    <p class="text-github-muted leading-relaxed mb-4">
+                        Populate the local SQLite cache with rich synthetic school lessons and random absences (sick days, late arrivals) across the past 9 months.
+                    </p>
+                    <div class="bg-github-bg border border-github-border/60 p-2.5 rounded-md text-[10px] text-github-muted mb-4 space-y-1">
+                        <div class="font-bold text-github-header"><i class="fa-solid fa-lightbulb mr-1 text-purple-400"></i>Why use mock data?</div>
+                        <div>Ideal for testing! It enables you to preview all analytics features, Chart.js visuals, and the GitHub contribution heatmap immediately without entering real credentials.</div>
+                    </div>
+                </div>
+                <form action="{{ url_for('sync_page') }}" method="POST" class="pt-2">
+                    <input type="hidden" name="action" value="mock">
+                    <button type="submit" class="w-full py-2 bg-[#21262d] hover:bg-[#30363d] border border-github-border text-github-header font-bold rounded-md transition duration-150">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Generate Mock Data
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Troubleshooting Accordion -->
+        <div class="border border-github-border bg-github-card p-4 rounded-md">
+            <h3 class="text-sm font-bold text-github-header mb-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-triangle-exclamation text-github-yellow"></i>
+                Sync Troubleshooting & API Permissions
+            </h3>
+            <div class="space-y-3 mt-3 text-github-muted leading-relaxed">
+                <div>
+                    <span class="text-github-header font-semibold">1. Permission denied for fetching absences (error -8509):</span>
+                    <p class="mt-0.5">
+                        Standard password logins for student accounts typically do not have permission to retrieve absences via the standard JSON-RPC API. To bypass this, you must retrieve your 16-character <strong>Mobile Access Key (OTP Secret)</strong> from the WebUntis web portal (go to <strong>Profile -> Data Access / Mobile Devices</strong>, enable access, and click 'Show key'). Then, edit your profile settings and enter this 16-character key as your Password/Key.
+                    </p>
+                </div>
+                <div>
+                    <span class="text-github-header font-semibold">2. Server format:</span>
+                    <p class="mt-0.5">
+                        Ensure the server URL is clean. Enter it as <code class="bg-github-bg px-1 rounded border border-github-border font-mono text-[10px]">webuntis.grupet.at:8080</code> or <code class="bg-github-bg px-1 rounded border border-github-border font-mono text-[10px]">server.webuntis.com</code>. The sync code will automatically strip any leading protocol (<code class="bg-github-bg px-1 rounded border border-github-border font-mono text-[10px]">https://</code>) and trailing paths.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+    {% endif %}
+
+</div>
+{% endblock %}

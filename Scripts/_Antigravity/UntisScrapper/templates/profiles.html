@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Profiles List Column (takes 2 cols on lg screens) -->
+    <div class="lg:col-span-2 space-y-4">
+        <h2 class="text-base font-bold text-github-header font-mono mb-4">
+            <i class="fa-solid fa-users text-github-muted mr-2"></i>Profile Management
+        </h2>
+        
+        {% if not profiles %}
+            <!-- No Profiles Box -->
+            <div class="border border-github-border bg-github-card p-8 rounded-md text-center">
+                <i class="fa-solid fa-user-slash text-github-muted text-3xl mb-4"></i>
+                <h3 class="text-sm font-bold text-github-header font-mono mb-1">No Profiles Yet</h3>
+                <p class="text-xs text-github-muted font-mono max-w-sm mx-auto">
+                    Create a profile using the form on the right. You can add multiple profiles to switch between different WebUntis accounts easily.
+                </p>
+            </div>
+        {% else %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for p in profiles %}
+                    <div class="border {% if p.active %}border-github-green bg-github-card{% else %}border-github-border bg-github-card hover:border-github-muted{% endif %} rounded-md p-4 flex flex-col justify-between transition duration-150">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-bold text-github-header font-mono flex items-center gap-1.5">
+                                    <i class="fa-solid fa-user text-github-muted text-xs"></i>
+                                    {{ p.name }}
+                                </span>
+                                {% if p.active %}
+                                    <span class="bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider">Active</span>
+                                {% else %}
+                                    <form action="{{ url_for('profiles') }}" method="POST" class="inline">
+                                        <input type="hidden" name="action" value="select">
+                                        <input type="hidden" name="profile_id" value="{{ p.id }}">
+                                        <button type="submit" class="text-[10px] text-github-muted hover:text-github-header font-mono border border-github-border hover:border-github-muted px-1.5 py-0.5 rounded transition">
+                                            Make Active
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Profile Details -->
+                            <div class="text-[11px] font-mono text-github-muted space-y-1.5 py-2 border-t border-b border-github-border/40 my-3">
+                                <div class="flex justify-between">
+                                    <span>Server:</span>
+                                    <span class="text-github-header select-all">{{ p.server }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>School:</span>
+                                    <span class="text-github-header">{{ p.school }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Username:</span>
+                                    <span class="text-github-header">{{ p.username }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Last Sync:</span>
+                                    <span class="text-github-header">
+                                        {% if p.last_sync %}
+                                            {{ p.last_sync|replace("T", " ")|slice(0,16) }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Profile Actions -->
+                        <div class="flex items-center justify-end gap-2 mt-4">
+                            <button onclick='editProfile({{ p|tojson|safe }})' class="px-2 py-1 bg-[#21262d] hover:bg-[#30363d] border border-github-border rounded text-xs font-semibold font-mono text-github-header transition">
+                                <i class="fa-solid fa-pen-to-square mr-1"></i>Edit
+                            </button>
+                            <form action="{{ url_for('profiles') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this profile? All cached timetables and absences will be permanently removed.')" class="inline">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="profile_id" value="{{ p.id }}">
+                                <button type="submit" class="px-2 py-1 bg-red-950/20 hover:bg-red-900/30 text-github-red border border-red-900/40 rounded text-xs font-semibold font-mono transition">
+                                    <i class="fa-solid fa-trash-can mr-1"></i>Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Create / Edit Form Column (takes 1 col) -->
+    <div class="border border-github-border bg-github-card rounded-md p-4 h-fit">
+        <div id="form-container">
+            <h3 id="form-title" class="text-sm font-bold text-github-header font-mono mb-4">
+                <i class="fa-solid fa-user-plus text-github-muted mr-2"></i>Create New Profile
+            </h3>
+            
+            <form action="{{ url_for('profiles') }}" method="POST" class="space-y-4 text-xs font-mono">
+                <input type="hidden" name="action" id="form-action" value="add">
+                <input type="hidden" name="profile_id" id="edit-profile-id" value="">
+                
+                <div>
+                    <label class="block text-github-muted mb-1.5" for="name">Profile Name (Label)</label>
+                    <input type="text" name="name" id="name" required placeholder="e.g. My School Account" class="w-full px-3 py-2 bg-github-bg border border-github-border rounded-md text-github-header">
+                </div>
+                
+                <div>
+                    <label class="block text-github-muted mb-1.5" for="server">WebUntis Server URL</label>
+                    <input type="text" name="server" id="server" required placeholder="e.g. webuntis.grupet.at:8080" class="w-full px-3 py-2 bg-github-bg border border-github-border rounded-md text-github-header">
+                    <p class="text-[9px] text-github-muted mt-1">Leave out http/https (e.g. webuntis.com or server.webuntis.com)</p>
+                </div>
+                
+                <div>
+                    <label class="block text-github-muted mb-1.5" for="school">School Name</label>
+                    <input type="text" name="school" id="school" required placeholder="e.g. My-School-Shortname" class="w-full px-3 py-2 bg-github-bg border border-github-border rounded-md text-github-header">
+                    <p class="text-[9px] text-github-muted mt-1">Exact school identifier used on the WebUntis login page.</p>
+                </div>
+                
+                <div>
+                    <label class="block text-github-muted mb-1.5" for="username">Username</label>
+                    <input type="text" name="username" id="username" required placeholder="WebUntis Username" class="w-full px-3 py-2 bg-github-bg border border-github-border rounded-md text-github-header">
+                </div>
+                
+                <div>
+                    <label class="block text-github-muted mb-1.5" for="password">Password or OTP Secret Key (16-char)</label>
+                    <input type="password" name="password" id="password" required placeholder="Password or OTP Secret Key" class="w-full px-3 py-2 bg-github-bg border border-github-border rounded-md text-github-header">
+                    <p class="text-[9px] text-github-muted mt-1">To sync student absences, you MUST retrieve your 16-character Mobile Access Key (OTP Secret) from the WebUntis web portal (Profile -> Data Access / Mobile Devices) and enter it here instead of your password.</p>
+                </div>
+                
+                <div class="pt-2 flex items-center justify-between gap-2">
+                    <button type="button" id="cancel-edit" onclick="resetForm()" class="hidden w-1/2 px-3 py-2 bg-github-bg hover:bg-[#21262d] border border-github-border text-github-muted hover:text-github-header font-semibold rounded-md transition duration-150">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submit-btn" class="w-full px-3 py-2 bg-github-green hover:bg-github-greenHover text-github-header font-semibold rounded-md transition duration-150">
+                        Add Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function editProfile(profile) {
+        document.getElementById('form-title').innerHTML = '<i class="fa-solid fa-user-pen text-github-muted mr-2"></i>Edit Profile';
+        document.getElementById('form-action').value = 'edit';
+        document.getElementById('edit-profile-id').value = profile.id;
+        
+        document.getElementById('name').value = profile.name;
+        document.getElementById('server').value = profile.server;
+        document.getElementById('school').value = profile.school;
+        document.getElementById('username').value = profile.username;
+        document.getElementById('password').value = profile.password;
+        
+        document.getElementById('submit-btn').innerText = 'Save Changes';
+        document.getElementById('submit-btn').classList.remove('w-full');
+        document.getElementById('submit-btn').classList.add('w-1/2');
+        document.getElementById('cancel-edit').classList.remove('hidden');
+    }
+    
+    function resetForm() {
+        document.getElementById('form-title').innerHTML = '<i class="fa-solid fa-user-plus text-github-muted mr-2"></i>Create New Profile';
+        document.getElementById('form-action').value = 'add';
+        document.getElementById('edit-profile-id').value = '';
+        
+        document.getElementById('name').value = '';
+        document.getElementById('server').value = '';
+        document.getElementById('school').value = '';
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        
+        document.getElementById('submit-btn').innerText = 'Add Profile';
+        document.getElementById('submit-btn').classList.remove('w-1/2');
+        document.getElementById('submit-btn').classList.add('w-full');
+        document.getElementById('cancel-edit').classList.add('hidden');
+    }
+</script>
+{% endblock %}

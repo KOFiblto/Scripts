@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebUntis Analytics Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        github: {
+                            bg: '#0d1117',
+                            card: '#161b22',
+                            border: '#30363d',
+                            header: '#f0f6fc',
+                            text: '#c9d1d9',
+                            muted: '#8b949e',
+                            green: '#2ea44f',
+                            greenHover: '#2c974b',
+                            red: '#f85149',
+                            yellow: '#d29922'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica', 'Arial', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'SF Mono', 'Menlo', 'Consolas', 'Liberation Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        }
+        
+        /* Custom GitHub-style scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8b949e;
+        }
+        
+        /* Subtle inputs */
+        input, select {
+            background-color: #0d1117 !important;
+            border-color: #30363d !important;
+            color: #c9d1d9 !important;
+        }
+        input:focus, select:focus {
+            outline: none !important;
+            border-color: #58a6ff !important;
+            box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.15) !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-[#161b22] border-b border-github-border sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo and Title -->
+                <div class="flex items-center">
+                    <a href="{{ url_for('dashboard') }}" class="flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-line text-github-green text-2xl"></i>
+                        <span class="text-github-header font-bold text-lg tracking-tight font-mono">WebUntis<span class="text-github-green">.analytics</span></span>
+                    </a>
+                    
+                    <!-- Tabs -->
+                    <nav class="hidden md:flex ml-10 space-x-4">
+                        <a href="{{ url_for('dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if request.path == url_for('dashboard') %}bg-[#21262d] text-github-header border border-github-border{% else %}text-github-muted hover:text-github-header{% endif %} transition duration-150">
+                            <i class="fa-solid fa-table-cells mr-2"></i>Dashboard
+                        </a>
+                        <a href="{{ url_for('profiles') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if request.path == url_for('profiles') %}bg-[#21262d] text-github-header border border-github-border{% else %}text-github-muted hover:text-github-header{% endif %} transition duration-150">
+                            <i class="fa-solid fa-users mr-2"></i>Profiles
+                        </a>
+                        <a href="{{ url_for('sync_page') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if request.path == url_for('sync_page') %}bg-[#21262d] text-github-header border border-github-border{% else %}text-github-muted hover:text-github-header{% endif %} transition duration-150">
+                            <i class="fa-solid fa-rotate mr-2"></i>Sync Settings
+                        </a>
+                    </nav>
+                </div>
+                
+                <!-- Active Profile Display & Selector -->
+                <div class="flex items-center space-x-4">
+                    {% if active_profile %}
+                        <div class="hidden sm:flex items-center space-x-2 bg-[#21262d] border border-github-border px-3 py-1.5 rounded-md text-xs font-mono">
+                            <span class="w-2.5 h-2.5 rounded-full {% if active_profile.is_mock %}bg-yellow-500{% else %}bg-github-green{% endif %} animate-pulse"></span>
+                            <span class="text-github-muted">Profile:</span>
+                            <span class="text-github-header font-semibold">{{ active_profile.name }}</span>
+                            {% if active_profile.is_mock %}
+                                <span class="bg-yellow-950/40 text-yellow-500 border border-yellow-800/50 px-1 py-0.2 rounded text-[10px]">MOCK</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Quick Profile Switcher -->
+                        {% if profiles|length > 1 %}
+                            <form action="{{ url_for('profiles') }}" method="POST" class="inline">
+                                <input type="hidden" name="action" value="select">
+                                <select name="profile_id" onchange="this.form.submit()" class="text-xs px-2 py-1.5 bg-github-bg border border-github-border rounded-md cursor-pointer">
+                                    {% for p in profiles %}
+                                        <option value="{{ p.id }}" {% if p.id == active_profile.id %}selected{% endif %}>
+                                            {{ p.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <a href="{{ url_for('profiles') }}" class="text-xs bg-[#21262d] border border-github-border px-3 py-1.5 rounded-md text-github-muted hover:text-github-header font-mono">
+                            <i class="fa-solid fa-plus mr-1"></i>Create Profile
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation -->
+    <div class="md:hidden bg-[#161b22] border-b border-github-border flex justify-around py-2 text-xs">
+        <a href="{{ url_for('dashboard') }}" class="flex flex-col items-center py-1 px-3 {% if request.path == url_for('dashboard') %}text-github-green{% else %}text-github-muted{% endif %}">
+            <i class="fa-solid fa-table-cells text-base mb-0.5"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('profiles') }}" class="flex flex-col items-center py-1 px-3 {% if request.path == url_for('profiles') %}text-github-green{% else %}text-github-muted{% endif %}">
+            <i class="fa-solid fa-users text-base mb-0.5"></i>
+            <span>Profiles</span>
+        </a>
+        <a href="{{ url_for('sync_page') }}" class="flex flex-col items-center py-1 px-3 {% if request.path == url_for('sync_page') %}text-github-green{% else %}text-github-muted{% endif %}">
+            <i class="fa-solid fa-rotate text-base mb-0.5"></i>
+            <span>Sync</span>
+        </a>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6 space-y-2">
+                    {% for category, message in messages %}
+                        <div class="flex items-center justify-between border px-4 py-3 rounded-md text-sm font-mono transition-opacity duration-300
+                            {% if category == 'success' %}
+                                bg-emerald-950/20 border-emerald-800/60 text-emerald-400
+                            {% elif category == 'error' %}
+                                bg-red-950/20 border-red-900/60 text-red-400
+                            {% elif category == 'info' %}
+                                bg-blue-950/20 border-blue-900/60 text-blue-400
+                            {% else %}
+                                bg-yellow-950/20 border-yellow-900/60 text-yellow-400
+                            {% endif %}">
+                            <div class="flex items-center space-x-2">
+                                {% if category == 'success' %}
+                                    <i class="fa-regular fa-circle-check"></i>
+                                {% elif category == 'error' %}
+                                    <i class="fa-regular fa-circle-xmark"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-info"></i>
+                                {% endif %}
+                                <span>{{ message }}</span>
+                            </div>
+                            <button onclick="this.parentElement.remove()" class="text-github-muted hover:text-github-header ml-4">
+                                <i class="fa-solid fa-xmark text-sm"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Child templates will inject content here -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#161b22] border-t border-github-border py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-github-muted font-mono">
+            <div class="flex items-center space-x-2 mb-2 md:mb-0">
+                <i class="fa-solid fa-terminal text-github-muted"></i>
+                <span>WebUntis Analytics Dashboard &copy; 2026</span>
+            </div>
+            <div class="flex space-x-4">
+                <span class="hover:text-github-header"><i class="fa-solid fa-shield-halved mr-1"></i>Secure Local SQLite</span>
+                <span class="hover:text-github-header"><i class="fa-brands fa-python mr-1"></i>python-webuntis</span>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
