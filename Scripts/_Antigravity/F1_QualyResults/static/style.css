@@ -1,0 +1,472 @@
+/* Modern F1 Dark Theme Custom Styling */
+:root {
+    --bg-primary: #0b0c10;
+    --bg-secondary: #141824;
+    --bg-card: rgba(30, 37, 56, 0.45);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --accent: #e10600; /* F1 Red */
+    --accent-hover: #ff1e18;
+    --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --neon-blue: #00f2fe;
+    --neon-green: #39ff14;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(225, 6, 0, 0.07) 0px, transparent 50%),
+        radial-gradient(at 90% 0%, rgba(0, 242, 254, 0.05) 0px, transparent 50%);
+}
+
+.app-container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* Header Styling */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 16px;
+    margin-bottom: 30px;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.f1-badge {
+    background-color: var(--accent);
+    color: #fff;
+    font-family: var(--font-heading);
+    font-weight: 900;
+    font-size: 20px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: -1px;
+    font-style: italic;
+}
+
+.logo-area h1 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: 0.5px;
+    color: var(--text-primary);
+}
+
+.accent-text {
+    color: var(--accent);
+}
+
+.header-tagline {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Glassmorphism utility */
+.glassmorphism {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+}
+
+/* Dashboard Layout Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Sidebar Controls */
+.controls-card {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.section-title {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.section-title svg {
+    color: var(--accent);
+    width: 18px;
+    height: 18px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.control-group label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+}
+
+/* Custom Multiselect Search Dropdown */
+.searchable-multiselect {
+    position: relative;
+    width: 100%;
+}
+
+.select-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(11, 12, 16, 0.7);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    user-select: none;
+}
+
+.select-box:hover, .select-box.active {
+    border-color: var(--accent);
+}
+
+.placeholder-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.selected-count-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.chevron-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+}
+
+.select-box.active .chevron-icon {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    max-height: 350px;
+}
+
+.dropdown-menu.show {
+    display: flex;
+}
+
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+    margin-right: 8px;
+}
+
+#driver-search-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: 14px;
+    width: 100%;
+}
+
+.driver-options-list {
+    overflow-y: auto;
+    max-height: 280px;
+}
+
+.driver-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    user-select: none;
+}
+
+.driver-option:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.driver-option input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+}
+
+.driver-info-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.driver-meta-name {
+    font-weight: 500;
+}
+
+.driver-meta-team {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* Season checkboxes as pills */
+.seasons-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.checkbox-pill {
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-pill input {
+    display: none;
+}
+
+.checkbox-pill span {
+    display: block;
+    text-align: center;
+    background: rgba(11, 12, 16, 0.7);
+    border: 1px solid var(--border-color);
+    padding: 8px 4px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.checkbox-pill.full-width span {
+    text-align: left;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-pill.full-width input:checked + span {
+    border-color: var(--accent);
+    background: rgba(225, 6, 0, 0.15);
+}
+
+.checkbox-pill input:checked + span {
+    border-color: var(--accent);
+    background: rgba(225, 6, 0, 0.15);
+    color: white;
+    box-shadow: 0 0 10px rgba(225, 6, 0, 0.2);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    outline: none;
+}
+
+.btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-primary {
+    background-color: var(--accent);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-hover);
+    box-shadow: 0 0 15px rgba(225, 6, 0, 0.4);
+}
+
+.btn-secondary {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: white;
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Main Content Flow */
+.main-content-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+
+/* Stats Row */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.stat-card {
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-value {
+    font-family: var(--font-heading);
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Chart Card & Layout */
+.chart-card {
+    padding: 24px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 450px;
+    width: 100%;
+}
+
+/* Table Card */
+.table-card {
+    padding: 24px;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    margin-top: 16px;
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+}
+
+.comparison-table th, .comparison-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.comparison-table th {
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+.comparison-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.driver-color-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}

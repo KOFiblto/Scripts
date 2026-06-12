@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Qualifying Performance Hub</title>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="f1-badge">F1</span>
+                <h1>QUALIFYING <span class="accent-text">HUB</span></h1>
+            </div>
+            <div class="header-tagline">Performance &amp; Head-to-Head Comparison (2021-2026)</div>
+        </header>
+
+        <!-- Main Dashboard Layout -->
+        <main class="dashboard-grid">
+            <!-- Sidebar Controls -->
+            <section class="controls-card glassmorphism">
+                <h2 class="section-title"><i data-lucide="sliders-horizontal"></i> Filters</h2>
+                
+                <div class="control-group">
+                    <label for="driver-search-input">Select Drivers</label>
+                    <div class="searchable-multiselect" id="driver-multiselect">
+                        <div class="select-box" id="select-box-btn">
+                            <span class="placeholder-text">Choose drivers...</span>
+                            <span class="selected-count-badge" id="selected-badge" style="display: none;">0</span>
+                            <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        </div>
+                        <div class="dropdown-menu" id="dropdown-menu">
+                            <div class="search-wrapper">
+                                <i data-lucide="search" class="search-icon"></i>
+                                <input type="text" id="driver-search-input" placeholder="Search driver or team...">
+                            </div>
+                            <div class="driver-options-list" id="driver-options-list">
+                                <!-- Dynamic Driver Options -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Seasons</label>
+                    <div class="seasons-grid">
+                        <label class="checkbox-pill"><input type="checkbox" name="season" value="2021" checked> <span>2021</span></label>
+                        <label class="checkbox-pill"><input type="checkbox" name="season" value="2022" checked> <span>2022</span></label>
+                        <label class="checkbox-pill"><input type="checkbox" name="season" value="2023" checked> <span>2023</span></label>
+                        <label class="checkbox-pill"><input type="checkbox" name="season" value="2024" checked> <span>2024</span></label>
+                        <label class="checkbox-pill"><input type="checkbox" name="season" value="2025" checked> <span>2025</span></label>
+                        <label class="checkbox-pill"><input type="checkbox" name="season" value="2026" checked> <span>2026</span></label>
+                    </div>
+                <div class="control-group">
+                    <label>Chart Options</label>
+                    <label class="checkbox-pill full-width" style="margin-bottom: 8px;">
+                        <input type="checkbox" id="disable-dots-checkbox">
+                        <span>Disable Chart Dots</span>
+                    </label>
+                    
+                    <label>Chart Height</label>
+                    <div style="display:flex; flex-direction:column; gap:6px; background: rgba(11, 12, 16, 0.7); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 8px;">
+                        <div style="display:flex; justify-content:space-between; font-size:12px;">
+                            <span>Height: <strong id="height-val">450px</strong></span>
+                        </div>
+                        <input type="range" id="chart-height-slider" min="300" max="1000" value="450" step="50" style="accent-color:var(--accent);">
+                    </div>
+                    
+                    <label>Chart Width</label>
+                    <div style="display:flex; flex-direction:column; gap:6px; background: rgba(11, 12, 16, 0.7); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div style="display:flex; justify-content:space-between; font-size:12px;">
+                            <span>Width: <strong id="width-val">Fit (100%)</strong></span>
+                        </div>
+                        <input type="range" id="chart-width-slider" min="100" max="300" value="100" step="20" style="accent-color:var(--accent);">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="apply-filters-btn">
+                    <i data-lucide="refresh-cw"></i> Update Analytics
+                </button>
+            </section>
+
+            <!-- Main Content Area -->
+            <div class="main-content-flow">
+                <!-- Overview Stats Grid -->
+                <div class="stats-row" id="stats-container">
+                    <!-- Dynamic Stat Cards -->
+                    <div class="stat-card glassmorphism">
+                        <div class="stat-value" id="stat-total-races">-</div>
+                        <div class="stat-label">Total Races analyzed</div>
+                    </div>
+                    <div class="stat-card glassmorphism">
+                        <div class="stat-value" id="stat-best-pos">-</div>
+                        <div class="stat-label">Best Grid Position</div>
+                    </div>
+                    <div class="stat-card glassmorphism">
+                        <div class="stat-value" id="stat-poles">-</div>
+                        <div class="stat-label">Pole Positions</div>
+                    </div>
+                </div>
+
+                <!-- Main Chart Card -->
+                <section class="chart-card glassmorphism">
+                    <div class="chart-header">
+                        <h2 class="section-title"><i data-lucide="line-chart"></i> Qualifying History</h2>
+                        <button class="btn btn-secondary" id="export-chart-btn">
+                            <i data-lucide="download"></i> Export as Image
+                        </button>
+                    </div>
+                    <div class="chart-wrapper" style="width: 100%; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0, 0, 0, 0.2);">
+                        <div id="chart-container-inner" style="position: relative; width: 100%; height: 450px; transition: width 0.1s, height 0.1s;">
+                            <canvas id="qualifyingChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Comparison / Head-to-Head Table -->
+                <section class="table-card glassmorphism" id="h2h-section" style="display: none;">
+                    <h2 class="section-title"><i data-lucide="swords"></i> Head-to-Head Analysis</h2>
+                    <div class="table-wrapper">
+                        <table class="comparison-table">
+                            <thead>
+                                <tr id="h2h-headers">
+                                    <th>Driver Comparison</th>
+                                    <th>Avg Qualy Pos</th>
+                                    <th>Poles</th>
+                                    <th>Q3 Appearances</th>
+                                    <th>H2H Wins</th>
+                                </tr>
+                            </thead>
+                            <tbody id="h2h-body">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+    <script>
+        // Initialize lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
