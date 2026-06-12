@@ -1,1 +1,1 @@
-python verstappen.py
+python verstappen.py --continuous
