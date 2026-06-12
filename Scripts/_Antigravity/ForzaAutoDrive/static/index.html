@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forza Horizon AutoDrive Controller</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Background glows -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="app-container">
+        <!-- Top Glass Header -->
+        <header class="app-header">
+            <div class="brand">
+                <span class="brand-icon">🏎️</span>
+                <div class="brand-text">
+                    <h1>FH AUTODRIVE</h1>
+                    <span class="subtitle">Universal Automation Hub</span>
+                </div>
+            </div>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="drive">🏎️ Drive Console</button>
+                <button class="nav-tab" data-tab="profiles">🗃️ Track Setups</button>
+                <button class="nav-tab" data-tab="cars">🚗 Cars Manager</button>
+                <button class="nav-tab" data-tab="macros">⚙️ Sequences & Keys</button>
+                <button class="nav-tab" data-tab="rankings">🏆 Rankings</button>
+                <button class="nav-tab" data-tab="guide">📖 Guide & Docs</button>
+            </nav>
+        </header>
+
+        <div class="main-layout">
+            <!-- Main Content Area -->
+            <main class="content-panel">
+                
+                <!-- TAB 1: DRIVE DASHBOARD -->
+                <section class="tab-content active" id="tab-drive">
+                    <div class="dashboard-grid">
+                        <!-- Left Panel: Status & Controls -->
+                        <div class="dashboard-left card">
+                            <div class="dashboard-header">
+                                <h2 id="activeTrackTitle">Select a Track</h2>
+                                <span class="badge" id="activeTrackType">Race</span>
+                            </div>
+                            
+                            <!-- Drive Control State Widget -->
+                            <div class="drive-console-card">
+                                <div class="status-indicator" id="driveStateIndicator">
+                                    <span class="status-pulse"></span>
+                                    <span class="status-text" id="statusPhase">SYSTEM STATUS: IDLE</span>
+                                </div>
+                                <p class="status-description" id="statusDesc">Select a profile and click Start Driving.</p>
+                                
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" id="statusProgress" style="width: 0%;"></div>
+                                </div>
+                                <div class="progress-labels">
+                                    <span id="timeRemaining">Time Remaining: 0.0s</span>
+                                </div>
+
+                                <!-- Checklist of running actions -->
+                                <div class="running-actions-checklist" id="runningActionsChecklist" style="width: 100%; display: none; flex-direction: column; gap: 10px; margin: 20px 0; padding-right: 5px;">
+                                    <!-- Dynamic action rows -->
+                                </div>
+                                
+                                <div class="control-actions">
+                                    <button class="btn btn-giant btn-success" id="startDriveBtn">🚀 START AUTODRIVE</button>
+                                    <button class="btn btn-giant btn-danger" id="stopDriveBtn" disabled>⏹️ STOP / ABORT</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Session Stats & Car Card -->
+                        <div class="dashboard-right">
+                            <div class="profile-card card">
+                                <div class="profile-select-row">
+                                    <label for="activeCarCombo">Active Profile:</label>
+                                    <select id="activeCarCombo" class="select-input">
+                                        <!-- Loaded Cars -->
+                                    </select>
+                                </div>
+                                <div class="dashboard-images-split">
+                                    <div class="viewport-half" id="consoleTrackImg">
+                                        <span class="viewport-badge">Track</span>
+                                        <div class="placeholder-text">No track image</div>
+                                    </div>
+                                    <div class="viewport-half" id="consoleCarImg">
+                                        <span class="viewport-badge">Car</span>
+                                        <div class="placeholder-text">No car image</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="session-stats-card card">
+                                <div class="card-header">
+                                    <h3>SESSION SUMMARY</h3>
+                                </div>
+                                <div class="stats-list">
+                                    <div class="stat-item">
+                                        <span class="stat-lbl">Completed Runs</span>
+                                        <span class="stat-val" id="statRuns">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-lbl">Credits (CR) Gained</span>
+                                        <span class="stat-val highlight-cr" id="statCr">0 CR</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-lbl">XP Gained</span>
+                                        <span class="stat-val highlight-xp" id="statXp">0 XP</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-lbl">Skills Accrued</span>
+                                        <span class="stat-val highlight-sp" id="statSkills">0.00 (0 SP)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 2: TRACK SETUPS -->
+                <section class="tab-content" id="tab-profiles">
+                    <div class="track-setup-layout" style="display: flex; gap: 20px; height: 100%;">
+                        <!-- Left: Sidebar Track Directory -->
+                        <aside class="sidebar-panel card" style="width: 250px; flex-shrink: 0; display: flex; flex-direction: column; padding: 15px;">
+                            <div class="panel-header">
+                                <h2>TRACK DIRECTORY</h2>
+                            </div>
+                            <div class="track-list" id="trackList" style="flex: 1; overflow-y: auto;">
+                                <!-- Dynamic Tracks List -->
+                            </div>
+                            <div class="sidebar-actions" style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <button class="btn btn-success" id="addTrackBtn">+ Add</button>
+                                <button class="btn btn-danger" id="delTrackBtn">🗑️ Delete</button>
+                            </div>
+                        </aside>
+
+                        <!-- Right: Profile Editor Grid (Middle Form + Right Media) -->
+                        <div class="profile-editor-grid" style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-width: 0;">
+                            <!-- Left Panel: Configuration Form -->
+                            <div class="profile-form-panel card">
+                                <div class="panel-header-row">
+                                    <h3 id="managerProfileTitle">Track Setup</h3>
+                                    <div class="profile-action-group">
+                                        <select id="managerCarCombo" class="select-input">
+                                            <!-- Loaded Cars -->
+                                        </select>
+                                        <button class="btn btn-small btn-success" id="addTrackCarBtn">+ Add Car</button>
+                                        <button class="btn btn-small btn-danger" id="delCarBtn">🗑️</button>
+                                    </div>
+                                </div>
+
+                            <form class="car-config-form" id="carConfigForm" onsubmit="return false;">
+                                <div class="form-row">
+                                    <div class="form-col full">
+                                        <label for="carNameInput">Car Name / Model (Read-Only):</label>
+                                        <input type="text" id="carNameInput" class="text-input" placeholder="e.g. Lotus Evija" readonly style="opacity: 0.65; cursor: not-allowed;">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-col full">
+                                        <label>Race / Active Drive Time:</label>
+                                        <div class="time-input-group">
+                                            <input type="number" id="timeMinInput" class="text-input time-box" placeholder="Min" min="0">
+                                            <span class="time-sep">m</span>
+                                            <input type="number" id="timeSecInput" class="text-input time-box" placeholder="Sec" min="0" max="59">
+                                            <span class="time-sep">s</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-row split">
+                                    <div class="form-col">
+                                        <label for="carXpInput">XP per Run:</label>
+                                        <input type="number" id="carXpInput" class="text-input" min="0">
+                                    </div>
+                                    <div class="form-col">
+                                        <label for="carCrInput">Credits (CR) per Run:</label>
+                                        <input type="number" id="carCrInput" class="text-input" min="0">
+                                    </div>
+                                </div>
+
+                                <div class="form-row split">
+                                    <div class="form-col">
+                                        <label for="carSpInput">Skillpoints per Run:</label>
+                                        <input type="number" id="carSpInput" class="text-input" min="0">
+                                    </div>
+                                    <div class="form-col">
+                                        <label for="carCrMultiplierInput">With multiplier (+0% to +100%):</label>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 13px; color: var(--text-secondary);">+</span>
+                                            <input type="number" id="carCrMultiplierInput" class="text-input" min="0" max="100" placeholder="0" style="flex: 1;">
+                                            <span style="font-size: 13px; color: var(--text-secondary);">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row" style="margin-bottom: 5px;">
+                                    <div class="static-warning" style="width: 100%; font-size: 12px; margin-bottom: 0;">
+                                        <span class="warning-icon">⚠️</span>
+                                        <span>Make sure to match difficulty/assist settings in-game to maintain this multiplier.</span>
+                                    </div>
+                                </div>
+
+                                <!-- DRIFT CONFIGURATION BOX -->
+                                <div class="drift-settings-box" id="driftSettingsBox" style="display: none;">
+                                    <h4 class="drift-header">Drift E-Brake Timing</h4>
+                                    <div class="form-row split">
+                                        <div class="form-col">
+                                            <label for="driftIntervalInput">E-Brake Interval (s):</label>
+                                            <input type="number" step="0.05" id="driftIntervalInput" class="text-input" placeholder="0.7">
+                                        </div>
+                                        <div class="form-col">
+                                            <label for="driftDurationInput">E-Brake Duration (s):</label>
+                                            <input type="number" step="0.05" id="driftDurationInput" class="text-input" placeholder="0.1">
+                                        </div>
+                                    </div>
+                                    <div class="form-row split">
+                                        <div class="form-col">
+                                            <label for="driftButtonSelect">E-Brake Button:</label>
+                                            <select id="driftButtonSelect" class="select-input">
+                                                <option value="A_BTN">A Button</option>
+                                                <option value="B_BTN">B Button</option>
+                                                <option value="X_BTN">X Button</option>
+                                                <option value="Y_BTN">Y Button</option>
+                                                <option value="LB">Left Shoulder (LB)</option>
+                                                <option value="RB">Right Shoulder (RB)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary btn-block" id="saveCarBtn">💾 Save Profile Changes</button>
+                            </form>
+                        </div>
+
+                        <!-- Right Panel: Image upload & calculations -->
+                        <div class="profile-media-panel">
+                            <div class="image-uploaders-split">
+                                <div class="image-uploader-card card">
+                                    <div class="panel-header">
+                                        <h3>TRACK BANNER</h3>
+                                    </div>
+                                    <div class="uploader-viewport" id="managerTrackImg">
+                                        <div class="placeholder-text">Click to upload track banner</div>
+                                    </div>
+                                    <input type="file" id="trackImageFileInput" style="display: none;" accept="image/*">
+                                    <button class="btn btn-neutral btn-block btn-small" id="uploadTrackImgBtn">📁 Change Track Image</button>
+                                </div>
+                                <div class="image-uploader-card card">
+                                    <div class="panel-header">
+                                        <h3>CAR VIEWPORT</h3>
+                                    </div>
+                                    <div class="uploader-viewport" id="managerCarImg">
+                                        <div class="placeholder-text">Click to upload car picture</div>
+                                    </div>
+                                    <input type="file" id="carImageFileInput" style="display: none;" accept="image/*">
+                                    <button class="btn btn-neutral btn-block btn-small" id="uploadImgBtn">📁 Change Car Image</button>
+                                </div>
+                            </div>
+
+                            <!-- Yield calculator card -->
+                            <div class="calc-yield-card card">
+                                <div class="card-header">
+                                    <h3 class="highlight-green">ESTIMATED YIELD (PER HOUR)</h3>
+                                </div>
+                                <div class="yield-metrics">
+                                    <div class="metric-row">
+                                        <span class="metric-lbl">Runs/Hour</span>
+                                        <span class="metric-val" id="calcRuns">-- runs</span>
+                                    </div>
+                                    <div class="metric-row">
+                                        <span class="metric-lbl">Credits/Hour</span>
+                                        <span class="metric-val highlight-cr" id="calcCr">-- CR</span>
+                                    </div>
+                                    <div class="metric-row">
+                                        <span class="metric-lbl">XP/Hour</span>
+                                        <span class="metric-val highlight-xp" id="calcXp">-- XP</span>
+                                    </div>
+                                    <div class="metric-row">
+                                        <span class="metric-lbl">Skills/Hour</span>
+                                        <span class="metric-val highlight-sp" id="calcSkills">-- (0 SP)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- Close profile-editor-grid -->
+                    </div> <!-- Close track-setup-layout -->
+                </section>
+
+                <!-- TAB 3: CARS MANAGER -->
+                <section class="tab-content" id="tab-cars">
+                    <div class="profile-editor-grid">
+                        <!-- Left Panel: Global Cars List -->
+                        <div class="profile-form-panel card">
+                            <div class="panel-header-row">
+                                <h3>🚗 Global Cars Library</h3>
+                                <div class="profile-action-group">
+                                    <button class="btn btn-small btn-success" id="addGlobalCarBtn">+ New Car</button>
+                                    <button class="btn btn-small btn-danger" id="delGlobalCarBtn">🗑️ Delete</button>
+                                </div>
+                            </div>
+                            
+                            <div class="track-list" id="globalCarList" style="max-height: 250px; min-height: 200px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px;">
+                                <!-- Dynamic Global Cars List -->
+                            </div>
+                            
+                            <form class="car-config-form" id="globalCarForm" onsubmit="return false;">
+                                <div class="form-row">
+                                    <div class="form-col full">
+                                        <label for="globalCarNameInput">Car Model Name:</label>
+                                        <input type="text" id="globalCarNameInput" class="text-input" placeholder="e.g. BMW M4">
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary btn-block" id="saveGlobalCarBtn" style="margin-top: 10px;">💾 Save Car Name</button>
+                            </form>
+                        </div>
+
+                        <!-- Right Panel: Global Car Image Banner -->
+                        <div class="profile-media-panel">
+                            <div class="image-uploader-card card" style="height: 100%; display: flex; flex-direction: column; padding: 20px;">
+                                <div class="panel-header">
+                                    <h3>CAR PICTURE</h3>
+                                </div>
+                                <div class="uploader-viewport" id="globalCarImg" style="flex: 1; min-height: 180px;">
+                                    <div class="placeholder-text">Click to upload car image</div>
+                                </div>
+                                <input type="file" id="globalCarImageFileInput" style="display: none;" accept="image/*">
+                                <button class="btn btn-neutral btn-block btn-small" id="uploadGlobalCarImgBtn">📁 Change Car Image</button>
+                                <p style="font-size: 11px; color: var(--text-secondary); text-align: center; margin-top: 15px; font-style: italic;">
+                                    Uploading an image here updates this car model across all tracks and setups.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 3: MACROS & KEYBINDS -->
+                <section class="tab-content" id="tab-macros">
+                    <div class="macro-editor-grid">
+                        
+                        <!-- Left Panel: Controller Map and Preferences -->
+                        <div class="macro-left-panel">
+                            <!-- Preferences Card -->
+                            <div class="prefs-card card">
+                                <div class="card-header">
+                                    <h3>System Preferences</h3>
+                                </div>
+                                <div class="prefs-form">
+                                    <div class="pref-item checkbox-item">
+                                        <input type="checkbox" id="focusEnabledCheckbox">
+                                        <label for="focusEnabledCheckbox">Focus Game window on startup</label>
+                                    </div>
+
+                                    <div class="pref-item slider-item">
+                                        <div class="slider-lbl-row">
+                                            <label for="startupDelayInput">Startup Countdown Delay:</label>
+                                            <span class="slider-val" id="startupDelayVal">5s</span>
+                                        </div>
+                                        <input type="range" id="startupDelayInput" min="0" max="30" step="1" class="slider-bar">
+                                    </div>
+
+                                    <div class="pref-item checkbox-item spacer-top">
+                                        <input type="checkbox" id="activationEnabledCheckbox">
+                                        <label for="activationEnabledCheckbox">Auto-Activate AutoDrive in Race</label>
+                                    </div>
+
+                                    <div class="pref-item slider-item">
+                                        <div class="slider-lbl-row">
+                                            <label for="activationDelayInput">Post-Race Load Delay:</label>
+                                            <span class="slider-val" id="activationDelayVal">5.0s</span>
+                                        </div>
+                                        <input type="range" id="activationDelayInput" min="1" max="20" step="0.5" class="slider-bar">
+                                    </div>
+
+                                    <div class="pref-item slider-item spacer-top">
+                                        <div class="slider-lbl-row">
+                                            <label for="raceTimeBufferInput">Race Time Buffer (Traffic/Loading):</label>
+                                            <span class="slider-val" id="raceTimeBufferVal">15s</span>
+                                        </div>
+                                        <input type="range" id="raceTimeBufferInput" min="10" max="20" step="1" class="slider-bar">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Keybind Card -->
+                            <div class="keybind-card card">
+                                <div class="card-header">
+                                    <h3>Xbox Gamepad Mappings</h3>
+                                </div>
+                                <div class="keybind-form" id="keybindForm">
+                                    <!-- Dynamic roles populated by JS -->
+                                </div>
+                                <button class="btn btn-success btn-block spacer-top" id="saveBindingsBtn">💾 Save Controller Bindings</button>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Step List and Editor -->
+                        <div class="macro-right-panel card">
+                            <div class="panel-header-row">
+                                <h3 id="sequenceEditorHeader">Sequence Editor</h3>
+                                <select id="sequenceSwitchSelect" class="select-input select-medium">
+                                    <option value="universal_start">Universal Start Sequence</option>
+                                    <option value="post_race">Post-Race Sequence</option>
+                                </select>
+                            </div>
+
+                            <!-- Steps Container -->
+                            <div class="sequence-steps-container" id="sequenceStepsList">
+                                <!-- Loaded Steps -->
+                            </div>
+
+                            <!-- Step Form Editor -->
+                            <div class="step-editor-box">
+                                <h4 class="step-box-header" id="stepEditorTitle">Step Editor (Add New Step)</h4>
+                                <form id="stepForm" onsubmit="return false;">
+                                    <div class="form-row split-3">
+                                        <div class="form-col span-2">
+                                            <label for="stepLabelInput">Step Label:</label>
+                                            <input type="text" id="stepLabelInput" class="text-input" placeholder="e.g. Confirm car select">
+                                        </div>
+                                        <div class="form-col">
+                                            <label for="stepTypeSelect">Type:</label>
+                                            <select id="stepTypeSelect" class="select-input">
+                                                <option value="button">button</option>
+                                                <option value="stick">stick</option>
+                                                <option value="wait">wait</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row split-3">
+                                        <div class="form-col span-2">
+                                            <label for="stepValueSelect">Action Value:</label>
+                                            <select id="stepValueSelect" class="select-input">
+                                                <!-- Dynamic values based on Type -->
+                                            </select>
+                                        </div>
+                                        <div class="form-col">
+                                            <label for="stepRepsInput">Reps:</label>
+                                            <input type="number" id="stepRepsInput" class="text-input" min="1" value="1">
+                                        </div>
+                                    </div>
+                                    <div class="form-row split-3">
+                                        <div class="form-col">
+                                            <label for="stepDelayInput">Post-Delay (s):</label>
+                                            <input type="number" step="0.1" id="stepDelayInput" class="text-input" min="0" value="0.0">
+                                        </div>
+                                        <div class="form-col button-group-col span-2">
+                                            <button class="btn btn-neutral" id="clearStepBtn">+ Clear / New</button>
+                                            <button class="btn btn-success" id="saveStepBtn">💾 Save Step</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                    </div>
+                </section>
+
+                <!-- TAB 4: RANKINGS -->
+                <section class="tab-content" id="tab-rankings">
+                    <div class="rankings-panel card">
+                        <div class="panel-header-row">
+                            <h3>🏆 Setup Rankings &amp; Performance</h3>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+                            Compiles yield metrics for all track-car setups, sorted by performance. Click headers to sort.
+                        </p>
+                        <div class="table-responsive">
+                            <table class="rankings-table">
+                                <thead>
+                                    <tr>
+                                        <th>Track</th>
+                                        <th>Car</th>
+                                        <th class="sortable-header" data-sort="cr">Cr/Hour ↕</th>
+                                        <th class="sortable-header" data-sort="xp">Xp/Hour ↕</th>
+                                        <th class="sortable-header" data-sort="sp">Skillpoints/Hour ↕</th>
+                                        <th>Time</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rankingsTableBody">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 5: GUIDE & DOCS -->
+                <section class="tab-content" id="tab-guide">
+                    <div class="track-setup-layout" style="display: flex; gap: 20px; height: 100%;">
+                        <!-- Left Guide Navigation -->
+                        <aside class="sidebar-panel card" style="width: 250px; flex-shrink: 0; display: flex; flex-direction: column; padding: 15px;">
+                            <div class="panel-header">
+                                <h2>GUIDE DIRECTORY</h2>
+                            </div>
+                            <div class="track-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+                                <button class="track-item active" onclick="switchGuideTopic('guide-basics')" style="color: #ffffff;">🏎️ Software Basics</button>
+                                <button class="track-item" onclick="switchGuideTopic('guide-tracks')" style="color: #ffffff;">🏁 Adding Tracks</button>
+                                <button class="track-item" onclick="switchGuideTopic('guide-cars')" style="color: #ffffff;">🚗 Adding Cars</button>
+                                <button class="track-item" onclick="switchGuideTopic('guide-df')" style="color: #ffffff;">🖥️ DisplayFusion Setup</button>
+                                <button class="track-item" onclick="switchGuideTopic('guide-driver')" style="color: #ffffff;">🎮 Controller Driver</button>
+                                <button class="track-item" onclick="switchGuideTopic('guide-focus')" style="color: #ffffff;">⚙️ General Controller Settings</button>
+                            </div>
+                        </aside>
+
+                        <!-- Right Guide Content Area -->
+                        <div class="profile-editor-grid" style="flex: 1; display: block; overflow-y: auto; padding: 24px; min-width: 0;" class="card">
+                            <div id="guide-basics" class="guide-article card" style="display: block; padding: 25px; line-height: 1.6;">
+                                <h2 style="color: var(--accent-cyan); font-size: 22px; margin-bottom: 15px;">🏎️ Forza AutoDrive Basics</h2>
+                                <p style="margin-bottom: 15px;">Forza AutoDrive is a universal automation suite designed to help you loop races, Time Attacks, and drift tracks in Forza Horizon with automated gamepad inputs.</p>
+                                <h3 style="color: var(--text-primary); margin-top: 20px; margin-bottom: 8px;">Execution Focus Modes:</h3>
+                                <ul style="margin-left: 20px; margin-bottom: 20px;">
+                                    <li><strong>Foreground Drive:</strong> Starts after a customizable countdown delay. You must click onto the Forza Horizon window during this delay so it is active. The application will send standard gamepad inputs to it.</li>
+                                    <li><strong>Background Drive:</strong> Starts driving immediately. Requires setting up DisplayFusion so the game continues accepting inputs when minimised or running in the background.</li>
+                                </ul>
+                                <h3 style="color: var(--text-primary); margin-top: 20px; margin-bottom: 8px;">Quick Start Checklist:</h3>
+                                <ol style="margin-left: 20px;">
+                                    <li>Make sure your virtual gamepad emulator driver is installed.</li>
+                                    <li>Setup your track profiles and register matching cars.</li>
+                                    <li>Select your track/car setup in the <strong>Drive Console</strong> and click <strong>Start Autodrive</strong>.</li>
+                                </ol>
+                            </div>
+
+                            <div id="guide-tracks" class="guide-article card" style="display: none; padding: 25px; line-height: 1.6;">
+                                <h2 style="color: var(--accent-cyan); font-size: 22px; margin-bottom: 15px;">🏁 How to Add Tracks</h2>
+                                <p style="margin-bottom: 15px;">Tracks represent the map circuits or sprint zones you run in Forza. To register a track:</p>
+                                <ol style="margin-left: 20px; margin-bottom: 20px;">
+                                    <li>Go to the <strong>Track Setups</strong> tab.</li>
+                                    <li>On the left sidebar, click the green <strong>+ Add</strong> button.</li>
+                                    <li>Enter the Track Name (e.g. <em>Horizon Baja Circuit</em>).</li>
+                                    <li>Select the Track Type:
+                                        <ul>
+                                            <li><strong>Race:</strong> Normal circuit races that support automatic sequences (universal start, post-race menus, and AutoDrive menu toggles).</li>
+                                            <li><strong>Time Attack:</strong> Runs where the car holds throttle. No automated D-pad inputs or start/stop menus are required.</li>
+                                            <li><strong>Drift:</strong> Drift loop paths that utilize automated, timed E-Brake taps.</li>
+                                        </ul>
+                                    </li>
+                                    <li>Click <strong>Create Track</strong>. You can upload custom banners from your computer to identify it.</li>
+                                </ol>
+                            </div>
+
+                            <div id="guide-cars" class="guide-article card" style="display: none; padding: 25px; line-height: 1.6;">
+                                <h2 style="color: var(--accent-cyan); font-size: 22px; margin-bottom: 15px;">🚗 How to Add and Configure Cars</h2>
+                                <p style="margin-bottom: 15px;">To use a specific car on a track, you must first add it to your global library and then attach it to the track profile:</p>
+                                <h4 style="color: var(--text-primary); margin-top: 15px; margin-bottom: 5px;">Step 1: Add a Global Car Model</h4>
+                                <ol style="margin-left: 20px; margin-bottom: 15px;">
+                                    <li>Go to the <strong>Cars Manager</strong> tab.</li>
+                                    <li>Click <strong>+ New Car</strong> in the upper right.</li>
+                                    <li>Type the exact name (e.g. <em>Toyota Tacoma</em> or <em>Lotus Evija</em>) and save.</li>
+                                    <li>Upload a profile picture to easily identify this car in menus.</li>
+                                </ol>
+                                <h4 style="color: var(--text-primary); margin-top: 15px; margin-bottom: 5px;">Step 2: Assign Car to Track</h4>
+                                <ol style="margin-left: 20px; margin-bottom: 15px;">
+                                    <li>Go to the <strong>Track Setups</strong> tab and click your desired Track on the sidebar.</li>
+                                    <li>Click the green <strong>+ Add Car</strong> button in the configuration form header.</li>
+                                    <li>Choose the car model from the dropdown list.</li>
+                                    <li>Set the expected lap/race time, average XP per run, and Credits (CR). Make sure to enter your custom **CR Multiplier (+0% to +100%)** so yields calculate correctly!</li>
+                                    <li>Click **Save Profile Changes** to persist details.</li>
+                                </ol>
+                            </div>
+
+                            <div id="guide-df" class="guide-article card" style="display: none; padding: 25px; line-height: 1.6;">
+                                <h2 style="color: var(--accent-cyan); font-size: 22px; margin-bottom: 15px;">🖥️ DisplayFusion Setup Guide</h2>
+                                <p style="margin-bottom: 15px;">DisplayFusion enables you to drive background windows. Follow these steps to configure background driving:</p>
+                                <ol style="margin-left: 20px;">
+                                    <li>Download and install <strong>DisplayFusion</strong>.</li>
+                                    <li>Open DisplayFusion settings and navigate to the <strong>Functions</strong> tab.</li>
+                                    <li>Search for the function named <strong>"Prevent Window Deactivation"</strong>.</li>
+                                    <li>Assign a key binding to this function (e.g., <code>Ctrl + Alt + F</code>).</li>
+                                    <li>Launch Forza Horizon, click the game window to select it, and hit your key combination. The window is now flagged to remain active when unfocused!</li>
+                                    <li>Select <strong>Background Focus</strong> in the Drive Console start setup. You can now use your PC freely while Forza drives in the background.</li>
+                                </ol>
+                            </div>
+
+                            <div id="guide-driver" class="guide-article card" style="display: none; padding: 25px; line-height: 1.6;">
+                                <h2 style="color: var(--accent-cyan); font-size: 22px; margin-bottom: 15px;">🎮 Virtual Gamepad Emulator Installation</h2>
+                                <p style="margin-bottom: 15px;">The automation engine communicates using a virtual Xbox 360 controller emulation layer called ViGEmBus. If missing, please follow this setup:</p>
+                                <ol style="margin-left: 20px;">
+                                    <li>Navigate to the releases page: <a href="https://github.com/nefarius/ViGEmBus/releases" target="_blank" style="color: var(--accent-indigo); text-decoration: underline;">GitHub Releases: ViGEmBus</a>.</li>
+                                    <li>Download the latest installer file (usually `ViGEmBus_Setup.exe`).</li>
+                                    <li>Run the setup wizard, grant administrative privileges, and click through the prompt.</li>
+                                    <li>Once setup is complete, restart this application. The gamepad error indicator will automatically clear.</li>
+                                </ol>
+                            </div>
+
+                            <div id="guide-focus" class="guide-article card" style="display: none; padding: 25px; line-height: 1.6;">
+                                <h2 style="color: var(--accent-cyan); font-size: 22px; margin-bottom: 15px;">⚙️ Xbox Gamepad Controls & Settings</h2>
+                                <p style="margin-bottom: 15px;">This software emulates a physical **Xbox 360 Controller** connection. To ensure inputs route successfully in Forza Horizon:</p>
+                                <h3 style="color: var(--text-primary); margin-top: 15px; margin-bottom: 5px;">Required Game Settings:</h3>
+                                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                                    <li><strong>Controls Profile:</strong> Go to Forza Settings → **Controls** and ensure your active configuration is set to the default gamepad layout.</li>
+                                    <li><strong>Key Mapping:</strong> Ensure keybind buttons match emulated roles. For example, if you mapped Anna to `DPAD_DOWN` or AutoDrive to `DPAD_LEFT` in the **Sequences & Keys** tab, those buttons must correspond to their default functions inside Forza's settings.</li>
+                                    <li><strong>Steam Input Warning:</strong> If running through Steam, make sure Steam Input is disabled or set to default Xbox configuration so it doesn't block the virtual controller inputs.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL: Required Setup Checklist (Multi-step) -->
+    <div class="modal-overlay" id="checklistModal">
+        <div class="modal-card" style="max-width: 700px; width: 90%;">
+            <button class="modal-close-btn" id="modalCloseX" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 20px; color: var(--text-secondary); cursor: pointer; line-height: 1; transition: color 0.2s;">&times;</button>
+            <!-- Progress indicator steps at the top -->
+            <div class="modal-steps-indicator" style="display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                <div class="step-indicator-item active" id="indicator-step-1">1. Choose Track</div>
+                <div class="step-indicator-item" id="indicator-step-2">2. Choose Car</div>
+                <div class="step-indicator-item" id="indicator-step-3">3. Config & Confirm</div>
+            </div>
+
+            <!-- STEP 1 PAGE: CHOOSE TRACK -->
+            <div class="modal-step-page active" id="step-page-1">
+                <h3 class="modal-title" style="margin-bottom: 15px;">Choose a Track</h3>
+                <div class="tiles-grid" id="modalTrackTiles" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; max-height: 350px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;">
+                    <!-- Track Tiles populated dynamically -->
+                </div>
+            </div>
+
+            <!-- STEP 2 PAGE: CHOOSE CAR -->
+            <div class="modal-step-page" id="step-page-2">
+                <h3 class="modal-title" style="margin-bottom: 15px;">Choose a Car Setup</h3>
+                <div class="tiles-grid" id="modalCarTiles" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; max-height: 350px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;">
+                    <!-- Car Tiles populated dynamically -->
+                </div>
+            </div>
+
+            <!-- STEP 3 PAGE: SETTINGS & CONFIRMATION -->
+            <div class="modal-step-page" id="step-page-3">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px;">
+                    <h3 class="modal-title" style="margin-bottom: 0;">Driving Setup & Options</h3>
+                    <button class="btn btn-neutral" id="focusHelpIcon" style="width: 20px; height: 20px; border-radius: 50%; padding: 0; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">i</button>
+                </div>
+                
+                <div class="modal-options-container" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; align-items: center;">
+                    <!-- Xbox A Button Styled Toggle -->
+                    <button type="button" id="modalAutoDriveToggle" class="autodrive-toggle-btn">
+                        <span class="xbox-a-badge">A</span>
+                        <span class="toggle-text">Dont enable AutoDrive</span>
+                    </button>
+                    
+                    <div class="modal-checklist" id="modalChecklistItems" style="width: 100%; max-height: 200px; overflow-y: auto; padding-right: 5px;">
+                        <!-- Warnings populated dynamically in JS -->
+                    </div>
+                </div>
+                
+                <p class="modal-warning" id="modalWarningText"></p>
+            </div>
+            
+            <div class="modal-actions" style="margin-top: 10px;">
+                <button class="btn btn-neutral" id="modalBackBtn" style="visibility: hidden;">Back</button>
+                <button class="btn btn-success" id="modalNextBtn">Next</button>
+                <button class="btn btn-success" id="modalForegroundBtn" style="display: none;">Foreground</button>
+                <button class="btn btn-primary" id="modalBackgroundBtn" style="display: none;">Background</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DisplayFusion Background Driving Guide -->
+    <div class="modal-overlay" id="displayFusionModal">
+        <div class="modal-card">
+            <h3 class="modal-title">ℹ️ Background Driving Guide</h3>
+            <p class="modal-subtitle">Run Forza Horizon in the background using DisplayFusion</p>
+            
+            <div class="guide-content" style="font-size: 13px; line-height: 1.6; color: var(--text-secondary); max-height: 300px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;">
+                <p style="margin-bottom: 10px;">By default, Windows locks gamepad input to the active foreground window. By setting up <strong>DisplayFusion</strong>, you can send virtual controller inputs to the game even while it runs in the background, allowing you to use your PC for other work!</p>
+                
+                <h4 style="margin-top: 15px; margin-bottom: 5px; color: var(--accent-cyan);">DisplayFusion Setup:</h4>
+                <ol style="margin-left: 20px;">
+                    <li>Download and install <strong>DisplayFusion</strong> (Free version works!).</li>
+                    <li>Open DisplayFusion settings and go to <strong>Functions</strong>.</li>
+                    <li>Find the function <strong>"Prevent Window Deactivation"</strong>.</li>
+                    <li>Assign a key binding to this function (e.g. <code>Ctrl + Alt + F</code>).</li>
+                    <li>Launch Forza Horizon, select its window, and press your key combination. This window will now remain active even when unfocused!</li>
+                    <li>In our assistant startup options, select <strong>Background Focus</strong>. The script will start driving immediately without taking over your screen!</li>
+                </ol>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-neutral" style="width: 100%;" onclick="document.getElementById('displayFusionModal').classList.remove('active')">Got It</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Driver Error Install Guide -->
+    <div class="modal-overlay" id="driverErrorModal">
+        <div class="modal-card">
+            <h3 class="modal-title" style="color: var(--accent-red);">⚠️ Virtual Controller Driver Missing</h3>
+            <p class="modal-subtitle">ViGEmBus driver is required for gamepad emulation</p>
+            
+            <div class="driver-guide-content" style="font-size: 13px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 20px;">
+                <p style="margin-bottom: 10px;">The application could not initialize the virtual Xbox 360 controller because the <strong>ViGEmBus</strong> driver is missing or not running.</p>
+                <h4 style="margin-top: 15px; margin-bottom: 5px; color: var(--accent-cyan);">Simple Installation Guide:</h4>
+                <ol style="margin-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+                    <li>Go to the official release page: <br>
+                        <a href="https://github.com/nefarius/ViGEmBus/releases" target="_blank" style="color: var(--accent-indigo); font-weight: bold; text-decoration: underline;">GitHub Releases: ViGEmBus</a>
+                    </li>
+                    <li>Download the installer executable (e.g., <code>ViGEmBus_Setup.exe</code>).</li>
+                    <li>Run the setup file and follow the onscreen setup.</li>
+                    <li>Once finished, restart this application.</li>
+                </ol>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-neutral" style="width: 100%;" onclick="document.getElementById('driverErrorModal').classList.remove('active')">Got It</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toast">Changes saved successfully!</div>
+
+    <!-- MODAL: Track Creation GUI Dialog -->
+    <div class="modal-overlay" id="trackCreateModal">
+        <div class="modal-card">
+            <h3 class="modal-title">🆕 Create Track Profile</h3>
+            <p class="modal-subtitle">Add a new event track to directory</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="newTrackName" style="font-size: 12.5px; color: var(--text-secondary); font-weight: 600;">Track Name:</label>
+                    <input type="text" id="newTrackName" class="text-input" placeholder="e.g. Horizon Baja Circuit">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="newTrackType" style="font-size: 12.5px; color: var(--text-secondary); font-weight: 600;">Track Type:</label>
+                    <select id="newTrackType" class="select-input">
+                        <option value="Race">Race</option>
+                        <option value="Time Attack">Time Attack</option>
+                        <option value="Drift">Drift</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-neutral" id="trackCreateCancelBtn">Cancel</button>
+                <button class="btn btn-success" id="trackCreateConfirmBtn">Create Track</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Car Setup Add GUI Dialog -->
+    <div class="modal-overlay" id="carSetupAddModal">
+        <div class="modal-card">
+            <h3 class="modal-title">🚗 Configure Car on Track</h3>
+            <p class="modal-subtitle">Select a car model from global library to add to this track</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="addSetupGlobalCarSelect" style="font-size: 12.5px; color: var(--text-secondary); font-weight: 600;">Select Car Model:</label>
+                    <select id="addSetupGlobalCarSelect" class="select-input">
+                        <!-- Dynamically populated global cars -->
+                    </select>
+                </div>
+                <p style="font-size: 12px; color: var(--text-secondary); text-align: center;">
+                    Don't see your car? Go to the <strong>Cars Manager</strong> tab to register new car models first.
+                </p>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-neutral" id="carSetupAddCancelBtn">Cancel</button>
+                <button class="btn btn-success" id="carSetupAddConfirmBtn">Add to Track</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Global Car Create GUI Dialog -->
+    <div class="modal-overlay" id="globalCarCreateModal">
+        <div class="modal-card">
+            <h3 class="modal-title">🚗 Add Global Car Model</h3>
+            <p class="modal-subtitle">Register a new car model in the global library</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="newGlobalCarName" style="font-size: 12.5px; color: var(--text-secondary); font-weight: 600;">Car Model Name:</label>
+                    <input type="text" id="newGlobalCarName" class="text-input" placeholder="e.g. Nissan GT-R Nismo">
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-neutral" id="globalCarCreateCancelBtn">Cancel</button>
+                <button class="btn btn-success" id="globalCarCreateConfirmBtn">Add Car Model</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JS Application script -->
+    <script src="/static/script.js"></script>
+</body>
+</html>
