@@ -4,6 +4,8 @@ let currentTrack = null;
 let cars = [];
 let currentCar = null;
 let settings = {};
+let crXpChart = null;
+let runsChart = null;
 let universalStartSteps = [];
 let postRaceSteps = [];
 let selectedStep = null;
@@ -83,8 +85,8 @@ const focusEnabledCheckbox = document.getElementById("focusEnabledCheckbox");
 const startupDelayInput = document.getElementById("startupDelayInput");
 const startupDelayVal = document.getElementById("startupDelayVal");
 const activationEnabledCheckbox = document.getElementById("activationEnabledCheckbox");
-const activationDelayInput = document.getElementById("activationDelayInput");
-const activationDelayVal = document.getElementById("activationDelayVal");
+const videoRunsToKeepInput = document.getElementById("videoRunsToKeepInput");
+const videoRunsToKeepVal = document.getElementById("videoRunsToKeepVal");
 const keybindForm = document.getElementById("keybindForm");
 const saveBindingsBtn = document.getElementById("saveBindingsBtn");
 
@@ -119,7 +121,47 @@ const carCrMultiplierInput = document.getElementById("carCrMultiplierInput");
 document.addEventListener("DOMContentLoaded", () => {
     initApp();
     setupEventListeners();
+    pollSystemStats();
+    setInterval(pollSystemStats, 2000);
 });
+
+async function pollSystemStats() {
+    try {
+        const res = await fetch("/api/system/stats");
+        if (!res.ok) return;
+        const stats = await res.json();
+        
+        const cpuBar = document.getElementById("sysCpuBar");
+        const cpuVal = document.getElementById("sysCpuVal");
+        if (cpuBar && cpuVal) {
+            cpuBar.style.width = `${stats.cpu}%`;
+            cpuVal.textContent = `${Math.round(stats.cpu)}%`;
+        }
+        
+        const ramBar = document.getElementById("sysRamBar");
+        const ramVal = document.getElementById("sysRamVal");
+        if (ramBar && ramVal) {
+            ramBar.style.width = `${stats.ram}%`;
+            ramVal.textContent = `${Math.round(stats.ram)}%`;
+        }
+        
+        const gpuBar = document.getElementById("sysGpuBar");
+        const gpuVal = document.getElementById("sysGpuVal");
+        if (gpuBar && gpuVal) {
+            gpuBar.style.width = `${stats.gpu}%`;
+            gpuVal.textContent = `${Math.round(stats.gpu)}%`;
+        }
+        
+        const vramBar = document.getElementById("sysVramBar");
+        const vramVal = document.getElementById("sysVramVal");
+        if (vramBar && vramVal) {
+            vramBar.style.width = `${stats.vram}%`;
+            vramVal.textContent = `${Math.round(stats.vram)}%`;
+        }
+    } catch (err) {
+        console.error("Error polling system stats:", err);
+    }
+}
 
 async function initApp() {
     await fetchTracks();
@@ -153,6 +195,8 @@ function setupEventListeners() {
                 fetchAndRenderRankings();
             } else if (tab.dataset.tab === "cars") {
                 fetchGlobalCars();
+            } else if (tab.dataset.tab === "history") {
+                fetchAndRenderHistory();
             }
         });
     });
@@ -166,10 +210,6 @@ function setupEventListeners() {
     document.getElementById("trackCreateConfirmBtn").addEventListener("click", confirmTrackCreate);
 
     // Car Combobox selections
-    activeCarCombo.addEventListener("change", (e) => {
-        const selected = cars.find(c => c.name === e.target.value);
-        if (selected) selectCar(selected.id);
-    });
 
     managerCarCombo.addEventListener("change", (e) => {
         const selected = cars.find(c => c.name === e.target.value);
@@ -227,8 +267,8 @@ function setupEventListeners() {
         saveGlobalSettings();
     });
 
-    activationDelayInput.addEventListener("input", (e) => {
-        activationDelayVal.textContent = `${parseFloat(e.target.value).toFixed(1)}s`;
+    videoRunsToKeepInput.addEventListener("input", (e) => {
+        videoRunsToKeepVal.textContent = e.target.value;
         saveGlobalSettings();
     });
 
@@ -447,16 +487,10 @@ async function loadCars(trackId, selectedCarId = null) {
         cars = await res.json();
         
         // Populate car dropdowns
-        activeCarCombo.innerHTML = "";
         managerCarCombo.innerHTML = "";
         
         if (cars.length > 0) {
             cars.forEach(car => {
-                const opt1 = document.createElement("option");
-                opt1.value = car.name;
-                opt1.textContent = car.name;
-                activeCarCombo.appendChild(opt1);
-                
                 const opt2 = document.createElement("option");
                 opt2.value = car.name;
                 opt2.textContent = car.name;
@@ -469,7 +503,6 @@ async function loadCars(trackId, selectedCarId = null) {
                 : cars[0].id;
             selectCar(idToSelect);
         } else {
-            activeCarCombo.innerHTML = "<option>-- No Cars --</option>";
             managerCarCombo.innerHTML = "<option>-- No Cars --</option>";
             currentCar = null;
             clearCarForm();
@@ -483,8 +516,13 @@ function selectCar(carId) {
     currentCar = cars.find(c => c.id === carId);
     if (!currentCar) return;
     
-    activeCarCombo.value = currentCar.name;
     managerCarCombo.value = currentCar.name;
+    
+    // Update active setup text display
+    const setupTextEl = document.getElementById("activeSetupText");
+    if (setupTextEl) {
+        setupTextEl.textContent = `${currentTrack ? currentTrack.name : "Track"} - ${currentCar.name}`;
+    }
     
     // Fill Form details
     managerProfileTitle.textContent = `Car profile: ${currentCar.name}`;
@@ -524,8 +562,15 @@ function clearCarForm() {
     if (carCrMultiplierInput) carCrMultiplierInput.value = "";
     carSpInput.value = "";
     
-    consoleCarImg.style.backgroundImage = "none";
-    consoleCarImg.innerHTML = '<div class="placeholder-text">No image uploaded</div>';
+    const setupTextEl = document.getElementById("activeSetupText");
+    if (setupTextEl) {
+        setupTextEl.textContent = "None selected";
+    }
+    
+    if (consoleCarImg) {
+        consoleCarImg.style.backgroundImage = "none";
+        consoleCarImg.innerHTML = '<div class="placeholder-text">No image uploaded</div>';
+    }
     managerCarImg.style.backgroundImage = "none";
     managerCarImg.innerHTML = '<div class="placeholder-text">Click below to upload a profile picture</div>';
     
@@ -537,17 +582,21 @@ function updateImages() {
     if (currentTrack) {
         const trackPath = currentTrack.image_path;
         if (trackPath) {
-            consoleTrackImg.style.backgroundImage = `url('${trackPath}')`;
-            consoleTrackImg.innerHTML = `<span class="viewport-badge">Track</span>`;
+            if (consoleTrackImg) {
+                consoleTrackImg.style.backgroundImage = `url('${trackPath}')`;
+                consoleTrackImg.innerHTML = `<span class="viewport-badge">Track</span>`;
+            }
             
             managerTrackImg.style.backgroundImage = `url('${trackPath}')`;
             managerTrackImg.innerHTML = "";
         } else {
-            consoleTrackImg.style.backgroundImage = "none";
-            consoleTrackImg.innerHTML = `
-                <span class="viewport-badge">Track</span>
-                <div class="placeholder-text">No track image</div>
-            `;
+            if (consoleTrackImg) {
+                consoleTrackImg.style.backgroundImage = "none";
+                consoleTrackImg.innerHTML = `
+                    <span class="viewport-badge">Track</span>
+                    <div class="placeholder-text">No track image</div>
+                `;
+            }
             
             managerTrackImg.style.backgroundImage = "none";
             managerTrackImg.innerHTML = '<div class="placeholder-text">Click to upload track banner</div>';
@@ -558,27 +607,33 @@ function updateImages() {
     if (currentCar) {
         const carPath = currentCar.image_path;
         if (carPath) {
-            consoleCarImg.style.backgroundImage = `url('${carPath}')`;
-            consoleCarImg.innerHTML = `<span class="viewport-badge">Car</span>`;
+            if (consoleCarImg) {
+                consoleCarImg.style.backgroundImage = `url('${carPath}')`;
+                consoleCarImg.innerHTML = `<span class="viewport-badge">Car</span>`;
+            }
             
             managerCarImg.style.backgroundImage = `url('${carPath}')`;
             managerCarImg.innerHTML = "";
         } else {
-            consoleCarImg.style.backgroundImage = "none";
-            consoleCarImg.innerHTML = `
-                <span class="viewport-badge">Car</span>
-                <div class="placeholder-text">No car image</div>
-            `;
+            if (consoleCarImg) {
+                consoleCarImg.style.backgroundImage = "none";
+                consoleCarImg.innerHTML = `
+                    <span class="viewport-badge">Car</span>
+                    <div class="placeholder-text">No car image</div>
+                `;
+            }
             
             managerCarImg.style.backgroundImage = "none";
             managerCarImg.innerHTML = '<div class="placeholder-text">Click below to upload a profile picture</div>';
         }
     } else {
-        consoleCarImg.style.backgroundImage = "none";
-        consoleCarImg.innerHTML = `
-            <span class="viewport-badge">Car</span>
-            <div class="placeholder-text">No car image</div>
-        `;
+        if (consoleCarImg) {
+            consoleCarImg.style.backgroundImage = "none";
+            consoleCarImg.innerHTML = `
+                <span class="viewport-badge">Car</span>
+                <div class="placeholder-text">No car image</div>
+            `;
+        }
         
         managerCarImg.style.backgroundImage = "none";
         managerCarImg.innerHTML = '<div class="placeholder-text">Click below to upload a profile picture</div>';
@@ -637,7 +692,7 @@ function calculateYield() {
         
         let activationDelay = 0;
         if (activationEnabledCheckbox.checked) {
-            activationDelay = parseFloat(activationDelayInput.value || 5) + 0.8;
+            activationDelay = 2.0;
         }
         
         totalLoopTime = startOverhead + activationDelay + timeSeconds + raceBuffer + postOverhead + startupDelay + focusOverhead;
@@ -899,7 +954,6 @@ async function handleTrackImageUpload(e) {
     }
 }
 
-// --- SETTINGS MAPPING CALLBACKS ---
 function populateSettingsForm() {
     focusEnabledCheckbox.checked = settings.focus_window_enabled === "True";
     
@@ -909,9 +963,9 @@ function populateSettingsForm() {
     
     activationEnabledCheckbox.checked = settings.autodrive_activation_enabled === "True";
     
-    const actVal = parseFloat(settings.autodrive_activation_delay || 5);
-    activationDelayInput.value = actVal;
-    activationDelayVal.textContent = `${actVal.toFixed(1)}s`;
+    const runsVal = parseInt(settings.video_runs_to_keep || 2);
+    videoRunsToKeepInput.value = runsVal;
+    videoRunsToKeepVal.textContent = runsVal;
 
     const bufferVal = parseInt(settings.race_time_buffer || 15);
     const bufferInput = document.getElementById("raceTimeBufferInput");
@@ -928,7 +982,7 @@ async function saveGlobalSettings() {
         focus_window_enabled: focusEnabledCheckbox.checked ? "True" : "False",
         startup_delay: startupDelayInput.value,
         autodrive_activation_enabled: activationEnabledCheckbox.checked ? "True" : "False",
-        autodrive_activation_delay: activationDelayInput.value,
+        video_runs_to_keep: videoRunsToKeepInput.value,
         race_time_buffer: bufferInput ? bufferInput.value : "15"
     };
     
@@ -942,7 +996,7 @@ async function saveGlobalSettings() {
             settings.focus_window_enabled = payload.focus_window_enabled;
             settings.startup_delay = payload.startup_delay;
             settings.autodrive_activation_enabled = payload.autodrive_activation_enabled;
-            settings.autodrive_activation_delay = payload.autodrive_activation_delay;
+            settings.video_runs_to_keep = payload.video_runs_to_keep;
             settings.race_time_buffer = payload.race_time_buffer;
             calculateYield();
         }
@@ -1501,6 +1555,18 @@ function buildConsoleActionsList(track, car, focusMode, autoEnable) {
     
     // 2. Track specific phases
     if (track.type === "Race") {
+        // AutoDrive Activation (if enabled) - Now runs first!
+        if (autoEnable) {
+            actions.push({
+                id: "autodrive_activation",
+                label: "Auto-Enable Game Autodrive",
+                phase: "AutoDrive Activation",
+                description: "",
+                status: "pending",
+                progress: 0
+            });
+        }
+
         // Universal Start Sequence steps
         universalStartSteps.forEach((step) => {
             actions.push({
@@ -1512,18 +1578,6 @@ function buildConsoleActionsList(track, car, focusMode, autoEnable) {
                 progress: 0
             });
         });
-        
-        // AutoDrive Activation (if enabled)
-        if (autoEnable) {
-            actions.push({
-                id: "autodrive_activation",
-                label: "Auto-Enable Game Autodrive",
-                phase: "AutoDrive Activation",
-                description: "",
-                status: "pending",
-                progress: 0
-            });
-        }
         
         // Active Driving Loop
         actions.push({
@@ -1638,6 +1692,13 @@ function updateConsoleActionsUI(snap) {
             }
         }
     });
+    
+    // Remove completed AutoDrive activation action
+    const hasFinishedAutoDrive = consoleActionsList.some(act => act.id === "autodrive_activation" && act.status === "completed");
+    if (hasFinishedAutoDrive) {
+        consoleActionsList = consoleActionsList.filter(act => act.id !== "autodrive_activation");
+        maxActionIdxReached = Math.max(0, maxActionIdxReached - 1);
+    }
     
     renderConsoleActionsListHTML();
 }
@@ -1772,7 +1833,7 @@ function toggleUIRunningLock(lock) {
         stopDriveBtn.disabled = false;
         
         // Lock selections & tabs
-        activeCarCombo.disabled = true;
+        if (activeCarCombo) activeCarCombo.disabled = true;
         addTrackBtn.disabled = true;
         delTrackBtn.disabled = true;
         document.querySelector(".nav-tabs").setAttribute("disabled", "true");
@@ -1783,7 +1844,7 @@ function toggleUIRunningLock(lock) {
         stopDriveBtn.disabled = true;
         
         // Unlock
-        activeCarCombo.disabled = false;
+        if (activeCarCombo) activeCarCombo.disabled = false;
         addTrackBtn.disabled = false;
         delTrackBtn.disabled = false;
         document.querySelector(".nav-tabs").removeAttribute("disabled");
@@ -1834,7 +1895,7 @@ function computeSetupMetrics(trackType, timeSeconds, cr, cr_multiplier, xp, skil
         
         let activationDelay = 0;
         if (settings.autodrive_activation_enabled === "True") {
-            activationDelay = parseFloat(settings.autodrive_activation_delay || 5) + 0.8;
+            activationDelay = 2.0;
         }
         
         totalLoopTime = startOverhead + activationDelay + timeSeconds + raceBuffer + postOverhead + startupDelay + focusOverhead;
@@ -2206,4 +2267,154 @@ function switchGuideTopic(topicId) {
     }
 }
 window.switchGuideTopic = switchGuideTopic;
+
+async function fetchAndRenderHistory() {
+    try {
+        const res = await fetch("/api/history");
+        if (!res.ok) return;
+        const history = await res.json();
+        
+        const container = document.getElementById("historyList");
+        if (!container) return;
+        
+        container.innerHTML = "";
+        if (history.length === 0) {
+            container.innerHTML = `<p style="text-align: center; color: var(--text-secondary); margin-top: 20px;">No runs recorded in history yet.</p>`;
+        } else {
+            history.forEach(run => {
+                const item = document.createElement("div");
+                item.className = "stat-item";
+                item.style.padding = "10px 15px";
+                item.style.background = "rgba(255,255,255,0.01)";
+                item.style.border = "1px solid var(--border-color)";
+                item.style.borderRadius = "8px";
+                item.style.display = "flex";
+                item.style.flexDirection = "column";
+                item.style.gap = "4px";
+                
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+                        <span style="color: var(--accent-cyan);">${run.track_name}</span>
+                        <span style="color: var(--text-secondary); font-size: 11px;">${run.timestamp}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
+                        <span>Car: ${run.car_name}</span>
+                        <span style="font-weight: bold;">
+                            <span class="highlight-cr">${run.cr.toLocaleString()} CR</span> | 
+                            <span class="highlight-xp">${run.xp.toLocaleString()} XP</span>
+                        </span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        renderHistoryCharts(history);
+    } catch (err) {
+        console.error("Error fetching history:", err);
+    }
+}
+
+function renderHistoryCharts(history) {
+    const data = [...history].reverse();
+    const labels = data.map((_, idx) => `Run #${idx + 1}`);
+    const crData = data.map(run => run.cr);
+    const xpData = data.map(run => run.xp);
+    
+    if (crXpChart) crXpChart.destroy();
+    if (runsChart) runsChart.destroy();
+    
+    const ctx1 = document.getElementById("crXpChart").getContext("2d");
+    crXpChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Credits (CR) Gained',
+                    data: crData,
+                    borderColor: '#f1c40f',
+                    backgroundColor: 'rgba(241, 196, 15, 0.1)',
+                    yAxisID: 'yCR',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'XP Gained',
+                    data: xpData,
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    yAxisID: 'yXP',
+                    fill: true,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                yCR: {
+                    type: 'linear',
+                    position: 'left',
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#9ca3af' },
+                    title: { display: true, text: 'CR', color: '#f1c40f' }
+                },
+                yXP: {
+                    type: 'linear',
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#9ca3af' },
+                    title: { display: true, text: 'XP', color: '#3498db' }
+                },
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#9ca3af' }
+                }
+            },
+            plugins: {
+                legend: { labels: { color: '#f3f4f6' } }
+            }
+        }
+    });
+    
+    const trackCounts = {};
+    data.forEach(run => {
+        trackCounts[run.track_name] = (trackCounts[run.track_name] || 0) + 1;
+    });
+    
+    const ctx2 = document.getElementById("runsChart").getContext("2d");
+    runsChart = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(trackCounts),
+            datasets: [{
+                label: 'Runs completed',
+                data: Object.values(trackCounts),
+                backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                borderColor: '#6366f1',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#9ca3af', stepSize: 1 }
+                },
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#9ca3af' }
+                }
+            },
+            plugins: {
+                legend: { labels: { color: '#f3f4f6' } }
+            }
+        }
+    });
+}
 

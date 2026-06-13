@@ -23,7 +23,26 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Shared thread-safe status tracker & controller runner
 tracker = autodrive.StatusTracker()
-runner = autodrive.AutodriveRunner(tracker)
+streamer = autodrive.GameStreamer(tracker)
+streamer.start()
+runner = autodrive.AutodriveRunner(tracker, streamer)
+
+@app.get("/api/drive/stream")
+def get_drive_stream():
+    import time
+    from fastapi.responses import StreamingResponse
+    def gen():
+        while True:
+            with streamer.lock:
+                frame = streamer.latest_frame
+            if frame is not None:
+                import cv2
+                ret, jpeg = cv2.imencode('.jpg', frame)
+                if ret:
+                    yield (b'--frame\r\n'
+                           b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
+            time.sleep(0.1) # 10 FPS
+    return StreamingResponse(gen(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 @app.get("/")
 def read_root():
@@ -196,11 +215,48 @@ def get_settings():
 def get_rankings():
     return db.get_all_cars()
 
+@app.get("/api/history")
+def get_history():
+    return db.get_history()
+
 @app.post("/api/settings")
 def save_settings(data: dict):
     for k, v in data.items():
         db.save_setting(k, v)
     return {"status": "ok"}
+
+@app.get("/api/system/stats")
+def get_system_stats():
+    import psutil
+    import subprocess
+    cpu = psutil.cpu_percent()
+    ram = psutil.virtual_memory().percent
+    
+    gpu = 0.0
+    vram = 0.0
+    try:
+        res = subprocess.run(
+            ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used,memory.total", "--format=csv,noheader,nounits"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=1
+        )
+        if res.returncode == 0:
+            parts = res.stdout.strip().split(",")
+            gpu = float(parts[0].strip())
+            used_mem = float(parts[1].strip())
+            total_mem = float(parts[2].strip())
+            vram = (used_mem / total_mem) * 100.0 if total_mem > 0 else 0.0
+    except Exception:
+        pass
+        
+    return {
+        "cpu": cpu,
+        "ram": ram,
+        "gpu": gpu,
+        "vram": vram
+    }
 
 # Sequences endpoints
 @app.get("/api/sequences/{name}")

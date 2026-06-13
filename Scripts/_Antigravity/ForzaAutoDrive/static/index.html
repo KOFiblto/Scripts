@@ -12,6 +12,8 @@
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <!-- Main Style Sheet -->
     <link rel="stylesheet" href="/static/style.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- Background glows -->
@@ -34,6 +36,7 @@
                 <button class="nav-tab" data-tab="cars">🚗 Cars Manager</button>
                 <button class="nav-tab" data-tab="macros">⚙️ Sequences & Keys</button>
                 <button class="nav-tab" data-tab="rankings">🏆 Rankings</button>
+                <button class="nav-tab" data-tab="history">📈 History</button>
                 <button class="nav-tab" data-tab="guide">📖 Guide & Docs</button>
             </nav>
         </header>
@@ -44,84 +47,110 @@
                 
                 <!-- TAB 1: DRIVE DASHBOARD -->
                 <section class="tab-content active" id="tab-drive">
-                    <div class="dashboard-grid">
-                        <!-- Left Panel: Status & Controls -->
-                        <div class="dashboard-left card">
-                            <div class="dashboard-header">
-                                <h2 id="activeTrackTitle">Select a Track</h2>
+                    <!-- Top stats and profile selector row -->
+                    <div class="dashboard-top-bar card" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; margin-bottom: 10px; gap: 20px; flex-wrap: wrap;">
+                        <div class="active-setup-indicator" style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">Selected Setup:</span>
+                            <span id="activeSetupText" style="font-size: 13px; font-weight: 800; color: var(--accent-cyan);">None selected</span>
+                        </div>
+                        <div class="horizontal-stats" style="display: flex; gap: 15px; flex: 1; justify-content: flex-end; flex-wrap: wrap;">
+                            <div class="stat-pill card" style="padding: 8px 15px; display: flex; align-items: center; gap: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.02);">
+                                <span class="stat-lbl" style="font-size: 12px; color: var(--text-secondary);">Runs:</span>
+                                <span class="stat-val" id="statRuns" style="font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 800;">0</span>
+                            </div>
+                            <div class="stat-pill card" style="padding: 8px 15px; display: flex; align-items: center; gap: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.02);">
+                                <span class="stat-lbl" style="font-size: 12px; color: var(--text-secondary);">Credits:</span>
+                                <span class="stat-val highlight-cr" id="statCr" style="font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 800;">0 CR</span>
+                            </div>
+                            <div class="stat-pill card" style="padding: 8px 15px; display: flex; align-items: center; gap: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.02);">
+                                <span class="stat-lbl" style="font-size: 12px; color: var(--text-secondary);">XP:</span>
+                                <span class="stat-val highlight-xp" id="statXp" style="font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 800;">0 XP</span>
+                            </div>
+                            <div class="stat-pill card" style="padding: 8px 15px; display: flex; align-items: center; gap: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.02);">
+                                <span class="stat-lbl" style="font-size: 12px; color: var(--text-secondary);">Skills:</span>
+                                <span class="stat-val highlight-sp" id="statSkills" style="font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 800;">0.00 (0 SP)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Resource Usage Bar -->
+                    <div class="system-resources-bar card" style="display: flex; gap: 20px; align-items: center; padding: 10px 20px; margin-bottom: 15px; font-size: 12px; background: rgba(255, 255, 255, 0.01);">
+                        <span style="font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px;">System Resources:</span>
+                        <div style="display: flex; gap: 20px; flex: 1; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: var(--text-secondary);">CPU:</span>
+                                <div class="resource-bar-bg" style="width: 80px; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-color);">
+                                    <div id="sysCpuBar" style="width: 0%; height: 100%; background: var(--accent-cyan); transition: width 0.3s ease;"></div>
+                                </div>
+                                <span id="sysCpuVal" style="font-weight: bold; min-width: 30px;">0%</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: var(--text-secondary);">RAM:</span>
+                                <div class="resource-bar-bg" style="width: 80px; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-color);">
+                                    <div id="sysRamBar" style="width: 0%; height: 100%; background: var(--accent-indigo); transition: width 0.3s ease;"></div>
+                                </div>
+                                <span id="sysRamVal" style="font-weight: bold; min-width: 30px;">0%</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: var(--text-secondary);">GPU:</span>
+                                <div class="resource-bar-bg" style="width: 80px; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-color);">
+                                    <div id="sysGpuBar" style="width: 0%; height: 100%; background: var(--accent-green); transition: width 0.3s ease;"></div>
+                                </div>
+                                <span id="sysGpuVal" style="font-weight: bold; min-width: 30px;">0%</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: var(--text-secondary);">VRAM:</span>
+                                <div class="resource-bar-bg" style="width: 80px; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-color);">
+                                    <div id="sysVramBar" style="width: 0%; height: 100%; background: var(--accent-orange); transition: width 0.3s ease;"></div>
+                                </div>
+                                <span id="sysVramVal" style="font-weight: bold; min-width: 30px;">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; height: calc(100% - 135px); min-height: 0;">
+                        <!-- Left Panel: Action-Box & Controls -->
+                        <div class="dashboard-left card" style="padding: 20px; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
+                            <div class="dashboard-header" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                <h2 id="activeTrackTitle" style="font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800;">Select a Track</h2>
                                 <span class="badge" id="activeTrackType">Race</span>
                             </div>
                             
                             <!-- Drive Control State Widget -->
-                            <div class="drive-console-card">
-                                <div class="status-indicator" id="driveStateIndicator">
+                            <div class="drive-console-card" style="flex: 1; display: flex; flex-direction: column; min-height: 0; background: rgba(0,0,0,0.15); padding: 15px; border-radius: 12px; overflow: hidden;">
+                                <div class="status-indicator" id="driveStateIndicator" style="margin-bottom: 5px;">
                                     <span class="status-pulse"></span>
                                     <span class="status-text" id="statusPhase">SYSTEM STATUS: IDLE</span>
                                 </div>
-                                <p class="status-description" id="statusDesc">Select a profile and click Start Driving.</p>
+                                <p class="status-description" id="statusDesc" style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">Select a profile and click Start Driving.</p>
                                 
-                                <div class="progress-bar-container">
+                                <div class="progress-bar-container" style="margin-bottom: 5px;">
                                     <div class="progress-bar-fill" id="statusProgress" style="width: 0%;"></div>
                                 </div>
-                                <div class="progress-labels">
+                                <div class="progress-labels" style="margin-bottom: 10px; font-size: 11px;">
                                     <span id="timeRemaining">Time Remaining: 0.0s</span>
                                 </div>
 
-                                <!-- Checklist of running actions -->
-                                <div class="running-actions-checklist" id="runningActionsChecklist" style="width: 100%; display: none; flex-direction: column; gap: 10px; margin: 20px 0; padding-right: 5px;">
+                                <!-- Checklist of running actions (scrollable container) -->
+                                <div class="running-actions-checklist" id="runningActionsChecklist" style="flex: 1; width: 100%; display: none; flex-direction: column; gap: 8px; margin: 10px 0; overflow-y: auto; padding-right: 5px;">
                                     <!-- Dynamic action rows -->
                                 </div>
                                 
-                                <div class="control-actions">
-                                    <button class="btn btn-giant btn-success" id="startDriveBtn">🚀 START AUTODRIVE</button>
-                                    <button class="btn btn-giant btn-danger" id="stopDriveBtn" disabled>⏹️ STOP / ABORT</button>
+                                <div class="control-actions" style="margin-top: auto; padding-top: 10px;">
+                                    <button class="btn btn-giant btn-success" id="startDriveBtn" style="padding: 12px; font-size: 14px;">🚀 START AUTODRIVE</button>
+                                    <button class="btn btn-giant btn-danger" id="stopDriveBtn" disabled style="padding: 12px; font-size: 14px; margin-top: 8px;">⏹️ STOP / ABORT</button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Right Panel: Session Stats & Car Card -->
-                        <div class="dashboard-right">
-                            <div class="profile-card card">
-                                <div class="profile-select-row">
-                                    <label for="activeCarCombo">Active Profile:</label>
-                                    <select id="activeCarCombo" class="select-input">
-                                        <!-- Loaded Cars -->
-                                    </select>
-                                </div>
-                                <div class="dashboard-images-split">
-                                    <div class="viewport-half" id="consoleTrackImg">
-                                        <span class="viewport-badge">Track</span>
-                                        <div class="placeholder-text">No track image</div>
-                                    </div>
-                                    <div class="viewport-half" id="consoleCarImg">
-                                        <span class="viewport-badge">Car</span>
-                                        <div class="placeholder-text">No car image</div>
-                                    </div>
-                                </div>
+                        <!-- Right Panel: Live Stream -->
+                        <div class="dashboard-right card" style="display: flex; flex-direction: column; padding: 20px; overflow: hidden; min-height: 0;">
+                            <div class="card-header" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-secondary); margin-bottom: 0;">LIVE GAMEPLAY STREAM</h3>
+                                <span class="badge" style="background: rgba(244, 63, 94, 0.15); color: var(--accent-red); border: 1px solid rgba(244, 63, 94, 0.3);">LIVE</span>
                             </div>
-
-                            <div class="session-stats-card card">
-                                <div class="card-header">
-                                    <h3>SESSION SUMMARY</h3>
-                                </div>
-                                <div class="stats-list">
-                                    <div class="stat-item">
-                                        <span class="stat-lbl">Completed Runs</span>
-                                        <span class="stat-val" id="statRuns">0</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-lbl">Credits (CR) Gained</span>
-                                        <span class="stat-val highlight-cr" id="statCr">0 CR</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-lbl">XP Gained</span>
-                                        <span class="stat-val highlight-xp" id="statXp">0 XP</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-lbl">Skills Accrued</span>
-                                        <span class="stat-val highlight-sp" id="statSkills">0.00 (0 SP)</span>
-                                    </div>
-                                </div>
+                            <div class="stream-viewport" style="flex: 1; background: #07080b; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color); box-shadow: inset 0 4px 20px rgba(0,0,0,0.6);">
+                                <img id="liveStreamImg" src="/api/drive/stream" style="width: 100%; height: 100%; object-fit: contain;" alt="Game Stream (AutoDrive standby)">
                             </div>
                         </div>
                     </div>
@@ -376,10 +405,10 @@
 
                                     <div class="pref-item slider-item">
                                         <div class="slider-lbl-row">
-                                            <label for="activationDelayInput">Post-Race Load Delay:</label>
-                                            <span class="slider-val" id="activationDelayVal">5.0s</span>
+                                            <label for="videoRunsToKeepInput">Video Runs to Keep:</label>
+                                            <span class="slider-val" id="videoRunsToKeepVal">2</span>
                                         </div>
-                                        <input type="range" id="activationDelayInput" min="1" max="20" step="0.5" class="slider-bar">
+                                        <input type="range" id="videoRunsToKeepInput" min="1" max="10" step="1" class="slider-bar" value="2">
                                     </div>
 
                                     <div class="pref-item slider-item spacer-top">
@@ -491,6 +520,33 @@
                                     <!-- Dynamic rows -->
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: HISTORY -->
+                <section class="tab-content" id="tab-history">
+                    <div class="history-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; height: 100%; min-height: 0;">
+                        <!-- Left Panel: Graphs -->
+                        <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;">
+                            <div class="card-header">
+                                <h3>PERFORMANCE & YIELD TRENDS</h3>
+                            </div>
+                            <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+                                <canvas id="crXpChart"></canvas>
+                            </div>
+                            <div class="chart-container" style="position: relative; height: 200px; width: 100%;">
+                                <canvas id="runsChart"></canvas>
+                            </div>
+                        </div>
+                        <!-- Right Panel: Run History List -->
+                        <div class="card" style="padding: 20px; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
+                            <div class="card-header">
+                                <h3>RECENT RUNS</h3>
+                            </div>
+                            <div id="historyList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
+                                <!-- Dynamic history items -->
+                            </div>
                         </div>
                     </div>
                 </section>

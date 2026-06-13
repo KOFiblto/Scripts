@@ -28,3 +28,7 @@ pip-delete-this-directory.txt
 *.njsproj
 *.sln
 *.swp
+
+# Video Recordings
+videos/
+

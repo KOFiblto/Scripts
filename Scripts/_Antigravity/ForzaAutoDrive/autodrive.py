@@ -4,6 +4,13 @@ import vgamepad as vg
 import win32gui
 import win32con
 import win32com.client
+import win32ui
+import win32process
+import psutil
+import ctypes
+import cv2
+import numpy as np
+import os
 
 BUTTON_MAP = {
     "A_BTN": vg.XUSB_BUTTON.XUSB_GAMEPAD_A,
@@ -21,6 +28,199 @@ BUTTON_MAP = {
     "DPAD_LEFT": vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT,
     "DPAD_RIGHT": vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT,
 }
+
+class GameStreamer:
+    def __init__(self, tracker):
+        # Set process DPI awareness to prevent scaling/cut-off issues
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2) # PROCESS_PER_MONITOR_DPI_AWARE
+        except Exception:
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except Exception:
+                pass
+
+        self.tracker = tracker
+        self.latest_frame = None
+        self.lock = threading.Lock()
+        self.is_running = False
+        self.thread = None
+        
+        # Video recording state
+        self.recording = False
+        self.video_writer = None
+        self.run_start_time = None
+        self.part_index = 1
+        self.current_run_dir = None
+        self.frame_size = (1280, 720)
+        self.fps = 10
+        self.part_start_time = 0
+        
+    def start(self):
+        if self.is_running:
+            return
+        self.is_running = True
+        self.thread = threading.Thread(target=self._capture_loop, daemon=True)
+        self.thread.start()
+        
+    def start_recording(self, runs_to_keep=2):
+        self.cleanup_old_runs(runs_to_keep)
+        
+        os.makedirs("videos", exist_ok=True)
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        self.current_run_dir = os.path.join("videos", f"run_{timestamp}")
+        os.makedirs(self.current_run_dir, exist_ok=True)
+        
+        self.part_index = 1
+        self.run_start_time = time.time()
+        self.recording = True
+        self._start_new_video_part()
+        
+    def stop_recording(self):
+        self.recording = False
+        if self.video_writer:
+            self.video_writer.release()
+            self.video_writer = None
+            
+    def _start_new_video_part(self):
+        if self.video_writer:
+            self.video_writer.release()
+            
+        filename = os.path.join(self.current_run_dir, f"part_{self.part_index:03d}.mp4")
+        self.part_index += 1
+        self.part_start_time = time.time()
+        
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        self.video_writer = cv2.VideoWriter(filename, fourcc, self.fps, self.frame_size)
+        
+    def cleanup_old_runs(self, keep_count):
+        if not os.path.exists("videos"):
+            return
+        run_dirs = []
+        for name in os.listdir("videos"):
+            p = os.path.join("videos", name)
+            if os.path.isdir(p) and name.startswith("run_"):
+                run_dirs.append((p, os.path.getmtime(p)))
+                
+        run_dirs.sort(key=lambda x: x[1])
+        
+        target_count = max(0, keep_count - 1)
+        if len(run_dirs) > target_count:
+            to_delete = run_dirs[:len(run_dirs) - target_count]
+            for p, _ in to_delete:
+                try:
+                    import shutil
+                    shutil.rmtree(p)
+                    print(f"Deleted old video run: {p}")
+                except Exception as e:
+                    print(f"Error deleting run folder {p}: {e}")
+
+    def _capture_loop(self):
+        while self.is_running:
+            frame = self._capture_window()
+            if frame is not None:
+                frame_with_overlay = self._add_overlay(frame)
+                with self.lock:
+                    self.latest_frame = frame_with_overlay
+                if self.recording and self.video_writer:
+                    elapsed = time.time() - self.part_start_time
+                    if elapsed >= 3600:
+                        self._start_new_video_part()
+                    self.video_writer.write(frame_with_overlay)
+            else:
+                standby = self._create_standby_frame()
+                with self.lock:
+                    self.latest_frame = standby
+            time.sleep(1.0 / self.fps)
+            
+    def _capture_window(self):
+        hwnd = self._get_game_hwnd("forzahorizon6.exe")
+        if not hwnd:
+            return None
+        try:
+            left, top, right, bottom = win32gui.GetClientRect(hwnd)
+            w = right - left
+            h = bottom - top
+            if w <= 0 or h <= 0:
+                return None
+            hwndDC = win32gui.GetWindowDC(hwnd)
+            mfcDC  = win32ui.CreateDCFromHandle(hwndDC)
+            saveDC = mfcDC.CreateCompatibleDC()
+            saveBitMap = win32ui.CreateBitmap()
+            saveBitMap.CreateCompatibleBitmap(mfcDC, w, h)
+            saveDC.SelectObject(saveBitMap)
+            result = ctypes.windll.user32.PrintWindow(hwnd, saveDC.GetSafeHdc(), 2)
+            bmpinfo = saveBitMap.GetInfo()
+            bmpstr = saveBitMap.GetBitmapBits(True)
+            img = np.frombuffer(bmpstr, dtype='uint8')
+            img.shape = (bmpinfo['bmHeight'], bmpinfo['bmWidth'], 4)
+            img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+            img = cv2.resize(img, self.frame_size)
+            win32gui.DeleteObject(saveBitMap.GetHandle())
+            saveDC.DeleteDC()
+            mfcDC.DeleteDC()
+            win32gui.ReleaseDC(hwnd, hwndDC)
+            return img
+        except Exception:
+            return None
+            
+    def _get_game_hwnd(self, process_name="forzahorizon6.exe"):
+        hwnd_found = []
+        def callback(hwnd, extra):
+            if win32gui.IsWindowVisible(hwnd):
+                try:
+                    _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                    proc = psutil.Process(pid)
+                    if proc.name().lower() == process_name.lower():
+                        hwnd_found.append(hwnd)
+                except Exception:
+                    pass
+            return True
+        win32gui.EnumWindows(callback, None)
+        return hwnd_found[0] if hwnd_found else None
+        
+    def _add_overlay(self, frame):
+        snap = self.tracker.get_snapshot()
+        phase = snap.get("phase", "Idle")
+        desc = snap.get("description", "")
+        text = f"{phase}"
+        if desc and desc != "Idle" and desc != "Starting up...":
+            text += f" - {desc}"
+        img = frame.copy()
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.65
+        thickness = 2
+        text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
+        text_w, text_h = text_size
+        margin = 15
+        box_left = self.frame_size[0] - text_w - 2 * margin
+        box_top = margin
+        box_right = self.frame_size[0] - margin
+        box_bottom = margin + text_h + 2 * margin
+        overlay = img.copy()
+        cv2.rectangle(overlay, (box_left, box_top), (box_right, box_bottom), (16, 11, 10), -1)
+        cv2.rectangle(overlay, (box_left, box_top), (box_right, box_bottom), (212, 182, 6), 1)
+        alpha = 0.8
+        cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0, img)
+        cv2.putText(img, text, (box_left + margin, box_bottom - margin), font, font_scale, (246, 244, 243), thickness, cv2.LINE_AA)
+        return img
+        
+    def _create_standby_frame(self):
+        img = np.zeros((self.frame_size[1], self.frame_size[0], 3), dtype=np.uint8)
+        for y in range(self.frame_size[1]):
+            factor = y / self.frame_size[1]
+            img[y, :] = [
+                int(16 * (1 - factor) + 33 * factor),
+                int(11 * (1 - factor) + 20 * factor),
+                int(10 * (1 - factor) + 18 * factor)
+            ]
+        text = "GAME STREAM STANDBY"
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(img, text, (400, 360), font, 1.0, (212, 182, 6), 2, cv2.LINE_AA)
+        ts = time.strftime("%Y-%m-%d %H:%M:%S")
+        cv2.putText(img, ts, (520, 400), font, 0.5, (150, 150, 150), 1, cv2.LINE_AA)
+        return img
+
 
 class StatusTracker:
     def __init__(self):
@@ -144,8 +344,9 @@ def execute_step(gamepad, step, settings):
             time.sleep(0.4)
 
 class AutodriveRunner:
-    def __init__(self, tracker):
+    def __init__(self, tracker, streamer=None):
         self.tracker = tracker
+        self.streamer = streamer
         self.thread = None
         
     def start(self, track, car, start_seq, post_seq, settings):
@@ -161,6 +362,13 @@ class AutodriveRunner:
             time_left=0.0,
             error_msg=None
         )
+        if self.streamer:
+            try:
+                keep_runs = int(settings.get("video_runs_to_keep", "2"))
+            except ValueError:
+                keep_runs = 2
+            self.streamer.start_recording(runs_to_keep=keep_runs)
+            
         self.thread = threading.Thread(
             target=self._run,
             args=(track, car, start_seq, post_seq, settings),
@@ -170,6 +378,8 @@ class AutodriveRunner:
         
     def stop(self):
         self.tracker.update(is_running=False, phase="Stopping", description="Stopping virtual controller...")
+        if self.streamer:
+            self.streamer.stop_recording()
         
     def _run(self, track, car, start_seq, post_seq, settings):
         gamepad = None
@@ -188,7 +398,6 @@ class AutodriveRunner:
                 focus_enabled = True
                 
             autodrive_activation_enabled = settings.get("execution_auto_enable", "True") == "True"
-            autodrive_activation_delay = float(settings.get("autodrive_activation_delay", 5.0))
             race_time_buffer = float(settings.get("race_time_buffer", 15.0))
             
             # 1. Countdown delay
@@ -217,7 +426,28 @@ class AutodriveRunner:
             track_type = track["type"]
             
             if track_type == "Race":
+                is_first_loop = True
                 while self.tracker.is_running:
+                    # Phase 0: AutoDrive Activation (Only on first run)
+                    if autodrive_activation_enabled and is_first_loop:
+                        if not self.tracker.is_running:
+                            return
+                        self.tracker.update(phase="AutoDrive Activation", description="Pressing ANNA (D-Pad Down)", progress=0.0)
+                        press_btn(gamepad, "ROLE_ANNA", settings)
+                        time.sleep(0.5)
+                        
+                        if not self.tracker.is_running:
+                            return
+                        self.tracker.update(phase="AutoDrive Activation", description="Pressing AutoDrive (D-Pad Left)", progress=0.33)
+                        press_btn(gamepad, "ROLE_AUTODRIVE", settings)
+                        time.sleep(0.5)
+                        
+                        if not self.tracker.is_running:
+                            return
+                        self.tracker.update(phase="AutoDrive Activation", description="Waiting 1s before default sequence...", progress=0.66)
+                        time.sleep(1.0)
+                        is_first_loop = False
+
                     # Phase 1: Universal Start Sequence
                     self.tracker.update(phase="Universal Start", progress=0.0)
                     for step in start_seq:
@@ -236,30 +466,6 @@ class AutodriveRunner:
                                 time.sleep(0.1)
                                 self.tracker.update(time_left=max(0.0, delay - (i / 10.0)), progress=(i / steps))
                                 
-                    # Phase 2: AutoDrive Activation
-                    if autodrive_activation_enabled:
-                        if not self.tracker.is_running:
-                            return
-                        self.tracker.update(phase="AutoDrive Activation", description="Waiting to activate AutoDrive...", progress=0.0)
-                        steps = int(autodrive_activation_delay * 10)
-                        for i in range(steps):
-                            if not self.tracker.is_running:
-                                return
-                            time.sleep(0.1)
-                            self.tracker.update(time_left=max(0.0, autodrive_activation_delay - (i / 10.0)), progress=(i / steps))
-                        
-                        if not self.tracker.is_running:
-                            return
-                        self.tracker.update(description="Pressing ANNA (D-Pad Down)")
-                        press_btn(gamepad, "ROLE_ANNA", settings)
-                        time.sleep(0.5)
-                        
-                        if not self.tracker.is_running:
-                            return
-                        self.tracker.update(description="Pressing AutoDrive (D-Pad Left)")
-                        press_btn(gamepad, "ROLE_AUTODRIVE", settings)
-                        time.sleep(0.5)
-                        
                     # Phase 3: Driving / Wait for race to finish
                     self.tracker.update(phase="Race Active", description=f"Driving: Wait for race to finish...", progress=0.0)
                     race_time = car["time_seconds"] + race_time_buffer
@@ -274,6 +480,11 @@ class AutodriveRunner:
                             
                     # Phase 4: Post-Race Sequence
                     self.tracker.update(phase="Post-Race Sequence", progress=0.0)
+                    try:
+                        import db
+                        db.add_history_record(track["id"], car["id"], car["cr"], car["xp"], car["skillpoints"])
+                    except Exception as e:
+                        print(f"Error logging run to history: {e}")
                     for step in post_seq:
                         if not self.tracker.is_running:
                             return
@@ -282,12 +493,38 @@ class AutodriveRunner:
                         
                         delay = step["delay"]
                         if delay > 0:
-                            steps = int(delay * 10)
-                            for i in range(steps):
+                            wait_first = min(delay, 1.0)
+                            steps_first = int(wait_first * 10)
+                            for i in range(steps_first):
                                 if not self.tracker.is_running:
                                     return
                                 time.sleep(0.1)
-                                self.tracker.update(time_left=max(0.0, delay - (i / 10.0)), progress=(i / steps))
+                                self.tracker.update(time_left=max(0.0, delay - (i / 10.0)), progress=(i / (delay * 10.0)))
+                            
+                            remaining_delay = delay - wait_first
+                            if remaining_delay > 0:
+                                ebrake_control = settings.get("control_EBRAKE", "A_BTN")
+                                ebrake_btn = BUTTON_MAP.get(ebrake_control, vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
+                                
+                                gamepad.press_button(button=ebrake_btn)
+                                gamepad.left_trigger_float(1.0)
+                                gamepad.update()
+                                
+                                steps_hold = int(remaining_delay * 10)
+                                try:
+                                    for i in range(steps_hold):
+                                        if not self.tracker.is_running:
+                                            break
+                                        time.sleep(0.1)
+                                        current_elapsed = wait_first + (i / 10.0)
+                                        self.tracker.update(
+                                            time_left=max(0.0, delay - current_elapsed),
+                                            progress=(current_elapsed / delay)
+                                        )
+                                finally:
+                                    gamepad.release_button(button=ebrake_btn)
+                                    gamepad.left_trigger_float(0.0)
+                                    gamepad.update()
                                 
                     # End of Run
                     with self.tracker.lock:
@@ -318,6 +555,11 @@ class AutodriveRunner:
                             self.tracker.accumulated_cr += car["cr"]
                             self.tracker.accumulated_xp += car["xp"]
                             self.tracker.accumulated_skillpoints += car["skillpoints"]
+                        try:
+                            import db
+                            db.add_history_record(track["id"], car["id"], car["cr"], car["xp"], car["skillpoints"])
+                        except Exception as e:
+                            print(f"Error logging run to history: {e}")
                 finally:
                     apply_accelerate(gamepad, accelerate_control, 0.0)
                     
@@ -346,6 +588,11 @@ class AutodriveRunner:
                                 self.tracker.accumulated_cr += car["cr"]
                                 self.tracker.accumulated_xp += car["xp"]
                                 self.tracker.accumulated_skillpoints += car["skillpoints"]
+                            try:
+                                import db
+                                db.add_history_record(track["id"], car["id"], car["cr"], car["xp"], car["skillpoints"])
+                            except Exception as e:
+                                print(f"Error logging run to history: {e}")
                             run_start = now
                             elapsed = 0.0
                             
@@ -380,6 +627,8 @@ class AutodriveRunner:
         except Exception as e:
             self.tracker.update(is_running=False, phase="Error", error_msg=str(e), description=f"Error: {e}")
         finally:
+            if self.streamer:
+                self.streamer.stop_recording()
             if gamepad is not None:
                 try:
                     gamepad.reset()

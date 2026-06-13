@@ -112,6 +112,20 @@ def init_db():
             value TEXT
         )
         """)
+        
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            track_id INTEGER,
+            car_setup_id INTEGER,
+            cr INTEGER,
+            xp INTEGER,
+            skillpoints INTEGER,
+            FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
+            FOREIGN KEY (car_setup_id) REFERENCES cars(id) ON DELETE CASCADE
+        )
+        """)
         conn.commit()
         
         # Restore or Seed Settings
@@ -124,6 +138,7 @@ def init_db():
                 ("startup_delay", "5"),
                 ("autodrive_activation_enabled", "True"),
                 ("autodrive_activation_delay", "5.0"),
+                ("video_runs_to_keep", "2"),
                 ("control_ACCELERATE", "RT"),
                 ("control_BRAKE", "LT"),
                 ("control_EBRAKE", "A_BTN"),
@@ -250,6 +265,7 @@ def init_db():
         ("autodrive_activation_enabled", "True"),
         ("autodrive_activation_delay", "5.0"),
         ("race_time_buffer", "15"),
+        ("video_runs_to_keep", "2"),
         ("control_ACCELERATE", "RT"),
         ("control_BRAKE", "LT"),
         ("control_EBRAKE", "A_BTN"),
@@ -447,6 +463,33 @@ def get_all_cars():
         JOIN tracks ON cars.track_id = tracks.id
         JOIN global_cars ON cars.global_car_id = global_cars.id
         ORDER BY global_cars.name
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+# History functions
+def add_history_record(track_id, car_setup_id, cr, xp, skillpoints):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO history (track_id, car_setup_id, cr, xp, skillpoints)
+        VALUES (?, ?, ?, ?, ?)
+    """, (track_id, car_setup_id, cr, xp, skillpoints))
+    conn.commit()
+    conn.close()
+
+def get_history():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT h.id, datetime(h.timestamp, 'localtime') AS timestamp, h.cr, h.xp, h.skillpoints, 
+               t.name AS track_name, gc.name AS car_name
+        FROM history h
+        JOIN tracks t ON h.track_id = t.id
+        JOIN cars c ON h.car_setup_id = c.id
+        JOIN global_cars gc ON c.global_car_id = gc.id
+        ORDER BY h.timestamp DESC
     """)
     rows = cursor.fetchall()
     conn.close()
